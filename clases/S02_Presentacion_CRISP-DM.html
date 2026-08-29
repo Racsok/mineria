@@ -1,0 +1,832 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Minería de Datos · Sesión 2 · CRISP-DM</title>
+<style>
+:root{
+  --esc:1;              /* escala tipográfica global — se ajusta con + y − */
+
+  --tinta:#100F0C;
+  --panel:#1A1814;
+  --linea:rgba(140,133,119,.24);
+  --texto:#E6E0D4;
+  --tenue:#98907F;
+  --papel:#F8F5EE;
+
+  --ambar:#F0AC46;   /* ejecución, foco */
+  --verde:#6ED09A;   /* dato limpio */
+  --rojo:#EE7358;    /* dato sucio, alerta */
+  --azul:#82B6E8;    /* modelo */
+
+  --mono:"Cascadia Mono",Consolas,"SF Mono",Menlo,"DejaVu Sans Mono",monospace;
+  --sans:"Segoe UI Variable Display","Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--tinta);
+  color:var(--texto);
+  font-family:var(--sans);
+  line-height:1.45;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* fondo: el punteado de una celda de notebook */
+body::before{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:radial-gradient(rgba(152,144,127,.11) 1px,transparent 1px);
+  background-size:26px 26px;
+}
+
+/* ---------- armazón ----------
+   Toda la tipografía cuelga de --u, que se ata al lado menor de un 16:9. */
+.deck{position:relative;z-index:1}
+.slide{
+  --w:min(100vw - 1.5rem, calc((100vh - 4.2rem) * 16 / 9), 1800px);
+  --u:calc(var(--w) * 0.0145 * var(--esc));
+  font-size:var(--u);
+
+  display:none;
+  width:var(--w);
+  aspect-ratio:16/9;
+  margin:.7rem auto 0;
+  padding:1.25em 1.7em 1.1em 1.7em;
+  padding-left:3.6em;
+  background:linear-gradient(155deg,var(--panel) 0%,#0E0D0A 100%);
+  border:1px solid var(--linea);
+  border-radius:3px;
+  box-shadow:0 24px 60px rgba(0,0,0,.55);
+  overflow:hidden;
+  position:relative;
+}
+.slide.is-live{display:flex;flex-direction:column}
+
+/* el canal izquierdo: el prompt In[ ] del notebook */
+.slide::before{
+  content:attr(data-in);
+  position:absolute;left:0;top:0;bottom:0;
+  width:2.6em;
+  border-right:1px solid var(--linea);
+  background:rgba(0,0,0,.22);
+  font-family:var(--mono);
+  font-size:.62em;
+  color:var(--tenue);
+  padding-top:2.4em;
+  text-align:center;
+  letter-spacing:.02em;
+}
+
+/* ---------- tipografía ---------- */
+h1{font-size:3.5em;line-height:1.02;margin:0 0 .12em;font-weight:650;letter-spacing:-.022em;color:var(--papel)}
+h2{font-size:2.05em;line-height:1.1;margin:0 0 .06em;font-weight:640;letter-spacing:-.016em;color:var(--papel)}
+.kicker{font-family:var(--mono);font-size:.86em;letter-spacing:.15em;text-transform:uppercase;
+        color:var(--ambar);margin:0 0 .5em}
+.rule{height:.12em;width:3.6em;background:var(--ambar);margin:.4em 0 .7em;border-radius:2px}
+
+.slide-body{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;
+            gap:.75em;overflow:auto;scrollbar-width:thin;scrollbar-color:var(--linea) transparent}
+.slide-body.top{justify-content:flex-start}
+
+p{margin:0 0 .4em;font-size:1.18em}
+.lead{font-size:1.5em;line-height:1.3;color:#F2EDE3}
+.tenue{color:var(--tenue)}
+strong{color:var(--papel);font-weight:650}
+em{color:var(--ambar);font-style:normal;font-weight:600}
+ul{margin:.15em 0 .3em;padding-left:1.05em}
+li{margin:.34em 0;font-size:1.16em;line-height:1.35}
+li::marker{color:var(--ambar)}
+code{font-family:var(--mono);background:rgba(240,172,70,.14);color:var(--ambar);
+     padding:.05em .3em;border-radius:3px;font-size:.94em}
+
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:1.4em;align-items:start}
+.cols3{display:grid;grid-template-columns:repeat(3,1fr);gap:1em}
+.cols21{display:grid;grid-template-columns:1.35fr 1fr;gap:1.2em;align-items:start}
+
+.caja{border:1px solid var(--linea);border-left:.16em solid var(--ambar);
+      background:rgba(0,0,0,.26);border-radius:3px;padding:.75em .95em}
+.caja h3{margin:0 0 .25em;font-size:1.2em;color:var(--papel);font-weight:640;line-height:1.2}
+.caja p,.caja li{font-size:1.06em;margin:.16em 0}
+.caja ul{padding-left:1em}
+.caja.verde{border-left-color:var(--verde)}
+.caja.rojo{border-left-color:var(--rojo)}
+.caja.azul{border-left-color:var(--azul)}
+
+/* ---------- tablas ---------- */
+table{border-collapse:collapse;width:100%;font-size:1.06em}
+th,td{padding:.3em .5em;text-align:left;border-bottom:1px solid var(--linea);line-height:1.28}
+th{color:var(--tenue);font-weight:600;font-size:.82em;text-transform:uppercase;letter-spacing:.07em}
+td.num,th.num{text-align:right;font-family:var(--mono)}
+tr.total td{border-top:.1em solid var(--ambar);border-bottom:none;color:var(--papel);font-weight:650}
+table.holgada th,table.holgada td{padding:.42em .5em}
+
+/* ---------- código ---------- */
+pre{font-family:var(--mono);font-size:1em;line-height:1.5;
+    background:#0B0A08;border:1px solid var(--linea);border-left:.16em solid var(--verde);
+    border-radius:3px;padding:.7em .9em;margin:.3em 0;overflow:auto;color:#E4DDCD}
+pre .c{color:var(--tenue)}
+pre .k{color:var(--ambar)}
+pre .s{color:var(--verde)}
+pre .o{color:var(--azul)}
+
+/* ---------- crisp-dm: la rueda ---------- */
+.ciclo{width:100%;max-height:62vh;display:block;margin:.1em auto}
+.ciclo .caja-fase{fill:rgba(0,0,0,.34);stroke:rgba(140,133,119,.34);stroke-width:1.2}
+.ciclo .n{fill:#F0AC46;font-family:var(--mono);font-size:15px;font-weight:600}
+.ciclo .t{fill:#E6E0D4;font-family:"Segoe UI",system-ui,sans-serif;font-size:20px;font-weight:600}
+.ciclo .flecha{fill:none;stroke:rgba(140,133,119,.5);stroke-width:2}
+.ciclo .atras{fill:none;stroke:#EE7358;stroke-width:2;stroke-dasharray:7 6}
+.ciclo .centro{fill:#98907F;font-family:var(--mono);font-size:16px;text-anchor:middle;letter-spacing:.08em}
+.ciclo .centro tspan.f{fill:#F8F5EE}
+
+/* fases en fila (lámina de resumen) */
+.fases{display:grid;grid-template-columns:repeat(6,1fr);gap:.5em;margin-top:.3em}
+.fase{border:1px solid var(--linea);border-radius:3px;background:rgba(0,0,0,.26);
+      padding:.6em .4em;text-align:center}
+.fase b{display:block;font-family:var(--mono);color:var(--ambar);font-size:.92em;margin-bottom:.25em}
+.fase span{font-size:1.02em;color:var(--texto);line-height:1.22;display:block}
+.fase.on{border-color:var(--ambar);background:rgba(240,172,70,.13)}
+
+/* ---------- revelado ---------- */
+.oculto{display:none}
+.mostrado .oculto{display:block}
+.mostrado .antes{display:none}
+.rv-btn{font-family:var(--mono);font-size:.8em;background:transparent;color:var(--tenue);
+        border:1px solid var(--linea);border-radius:3px;padding:.25em .7em;cursor:pointer;
+        align-self:flex-start;margin-top:.2em}
+.rv-btn:hover{color:var(--ambar);border-color:var(--ambar)}
+
+/* ---------- portada ---------- */
+.slide.cover{justify-content:center;background:linear-gradient(150deg,#211D15 0%,#0C0B09 70%)}
+.cover h1{font-size:4.4em}
+.cover .meta{font-family:var(--mono);color:var(--tenue);font-size:1.1em;line-height:1.95;margin-top:.7em}
+.cover .meta b{color:var(--ambar);font-weight:600}
+
+/* ---------- barra inferior ---------- */
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:5;
+     display:flex;align-items:center;gap:.6rem;
+     padding:.35rem clamp(.6rem,1.6vw,1.6rem);
+     background:linear-gradient(to top,rgba(16,15,12,.97),rgba(16,15,12,.72));
+     border-top:1px solid var(--linea);
+     font-family:var(--mono);font-size:.78rem;color:var(--tenue)}
+.bar button{background:transparent;border:1px solid var(--linea);color:var(--tenue);
+            border-radius:3px;min-width:1.9rem;height:1.7rem;cursor:pointer;font-size:.85rem;line-height:1}
+.bar button:hover{color:var(--ambar);border-color:var(--ambar)}
+.track{flex:1;height:2px;background:var(--linea);border-radius:2px;overflow:hidden}
+.fill{display:block;height:100%;width:0;background:var(--ambar);transition:width .28s ease}
+.zoom{color:var(--ambar)}
+.hint{display:none}
+@media (min-width:1000px){.hint{display:inline}}
+
+@media (prefers-reduced-motion:reduce){*{transition:none !important;animation:none !important}}
+
+/* ---------- impresión: una diapositiva por página ---------- */
+@media print{
+  body{background:#fff;color:#111}
+  body::before{display:none}
+  .bar{display:none}
+  .slide{display:block !important;page-break-after:always;break-after:page;
+         width:100%;aspect-ratio:auto;min-height:0;box-shadow:none;font-size:11pt;
+         border:none;background:#fff;color:#111;margin:0;padding:1.1cm}
+  .slide::before{display:none}
+  h1,h2,strong,.caja h3{color:#000}
+  .lead{color:#111}
+  .tenue,th{color:#555}
+  .slide-body{display:block;overflow:visible}
+  pre{background:#F3F1EC;color:#111;border-left-color:#2E7D5B}
+  .caja{background:#FAF8F4;border-color:#CCC}
+  em{color:#8A5B00}
+  .oculto{display:block !important}
+  .rv-btn{display:none}
+  .ciclo .t{fill:#111} .ciclo .caja-fase{fill:#F5F2EC;stroke:#BBB} .ciclo .centro{fill:#555}
+  .ciclo .centro tspan.f{fill:#111} .ciclo .flecha{stroke:#999} .ciclo .n{fill:#8A5B00}
+}
+</style>
+</head>
+<body>
+
+<main class="deck" id="deck">
+
+<!-- 1 -->
+<section class="slide cover" data-in="In [1]:">
+  <div class="slide-body">
+    <p class="kicker">Universidad Distrital Francisco José de Caldas · Ingeniería de Sistemas</p>
+    <h1>CRISP‑DM<br>de punta a punta</h1>
+    <div class="rule"></div>
+    <p class="lead">Sesión 2 — el proceso completo, en dos horas</p>
+    <p class="meta">
+      Minería de Datos · <b>26160</b> · grupo 020‑81<br>
+      Jueves <b>13 de agosto de 2026</b> · 8:00 – 10:00 · Sala de Informática <b>702</b><br>
+      Docente: Jhon Alejandro Varón Robayo
+    </p>
+  </div>
+</section>
+
+<!-- 2 -->
+<section class="slide" data-in="In [2]:">
+  <p class="kicker">Lo de hoy</p>
+  <h2>Dos horas, tres cosas</h2>
+  <div class="rule"></div>
+  <div class="slide-body">
+    <div class="cols3">
+      <div class="caja">
+        <h3>1 · Los grupos</h3>
+        <p class="tenue">Quedan cerrados <strong>ahora</strong>. Quien no esté inscrito, lo ubico yo.</p>
+      </div>
+      <div class="caja azul">
+        <h3>2 · CRISP‑DM completo</h3>
+        <p class="tenue">Las seis fases sobre un caso real, y el notebook de punta a punta.</p>
+      </div>
+      <div class="caja verde">
+        <h3>3 · Su proyecto</h3>
+        <p class="tenue">Última media hora: la fase 1 de <em>su</em> proyecto, escrita y entregada hoy.</p>
+      </div>
+    </div>
+    <div class="caja rojo">
+      <p><strong>Lo que sale de esta clase con fecha:</strong> la ficha de la fase 1 de cada grupo,
+      al grupo de WhatsApp <em>antes de las 10:00</em>. La propuesta completa de datos: <em>sábado 22</em>.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 3 -->
+<section class="slide" data-in="In [3]:">
+  <p class="kicker">Punto uno</p>
+  <h2>Grupos cerrados</h2>
+  <div class="rule"></div>
+  <div class="slide-body">
+    <p class="lead">Somos <strong>25</strong>: <em>seis grupos</em> —cinco de cuatro y uno de cinco—.</p>
+    <div class="cols">
+      <div>
+        <ul>
+          <li>Vocero por grupo: es quien publica y quien recibe los avisos.</li>
+          <li>El grupo <strong>no cambia</strong> durante el semestre.</li>
+          <li>Se formaliza en Moodle apenas abra la sección.</li>
+        </ul>
+      </div>
+      <div class="caja rojo">
+        <p>Quien no esté en un grupo a esta hora <strong>queda ubicado donde haya cupo</strong>.
+        Se avisó el sábado; se aplica hoy.</p>
+      </div>
+    </div>
+    <p class="tenue">Los seis grupos quedan escritos en el tablero. Cada uno trabaja hoy con esa
+       conformación, sin esperar a Moodle.</p>
+  </div>
+</section>
+
+<!-- 4 -->
+<section class="slide" data-in="In [4]:">
+  <p class="kicker">De dónde venimos</p>
+  <h2>Lo que quedó de la sesión pasada</h2>
+  <div class="rule"></div>
+  <div class="slide-body">
+    <div class="cols">
+      <div class="caja verde">
+        <h3>Las cuatro preguntas</h3>
+        <pre><code>df.shape
+df.dtypes
+df.isna().sum()
+df.describe()</code></pre>
+      </div>
+      <div class="caja rojo">
+        <h3>Y la trampa</h3>
+        <p><code>isna()</code> solo ve los faltantes <strong>que pandas reconoció</strong>.
+        <code>"N/A"</code> y <code>-99</code> no son faltantes para él: son texto y son un número.</p>
+      </div>
+    </div>
+    <p>Vimos una tabla sucia y la dejamos limpia. Hoy la pregunta es otra:
+    <strong>¿en qué parte del proceso estábamos?</strong> Y qué venía antes, y qué venía después.</p>
+  </div>
+</section>
+
+<!-- 5 -->
+<section class="slide" data-in="In [5]:">
+  <p class="kicker">Revisión conceptual</p>
+  <h2>Minería de datos, estadística, aprendizaje automático</h2>
+  <div class="rule"></div>
+  <div class="slide-body">
+    <table class="holgada">
+      <thead><tr><th>Campo</th><th>La pregunta que hace</th><th>Ejemplo</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Estadística</strong></td><td>¿Esta diferencia es real o es azar? <span class="tenue">Parte de una hipótesis.</span></td><td class="tenue">¿El promedio de dos programas difiere?</td></tr>
+        <tr><td><strong>Minería de datos</strong></td><td>¿Qué patrón útil hay aquí que nadie formuló antes? <span class="tenue">Parte de los datos.</span></td><td class="tenue">¿Qué perfiles se retiran?</td></tr>
+        <tr><td><strong>Aprendizaje automático</strong></td><td>¿Qué función predice mejor? <span class="tenue">Es el motor de la fase 4.</span></td><td class="tenue">Árbol, KNN, SVM</td></tr>
+        <tr><td><strong>Inteligencia de negocios</strong></td><td>¿Qué pasó? <span class="tenue">Mira hacia atrás: tableros e informes.</span></td><td class="tenue">Deserción por semestre</td></tr>
+      </tbody>
+    </table>
+    <div class="caja">
+      <p><strong>La relación, sin misticismo:</strong> la minería de datos es <em>el proceso completo</em>
+      —de la pregunta del negocio a la decisión—. El aprendizaje automático es <em>una</em> de sus seis
+      fases. La inteligencia artificial es el paraguas de todo lo anterior.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 6 -->
+<section class="slide" data-in="In [6]:">
+  <p class="kicker">Revisión conceptual</p>
+  <h2>Cinco tareas — y el semestre entero cabe ahí</h2>
+  <div class="rule"></div>
+  <div class="slide-body">
+    <table class="holgada">
+      <thead><tr><th>Tarea</th><th>Qué responde</th><th>Tipo</th><th class="num">Semanas</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Clasificación</strong></td><td>¿A cuál de estas categorías pertenece?</td><td class="tenue">predictiva</td><td class="num">6 – 9</td></tr>
+        <tr><td><strong>Regresión</strong></td><td>¿Qué valor numérico va a tomar?</td><td class="tenue">predictiva</td><td class="num">11 – 12</td></tr>
+        <tr><td><strong>Agrupamiento</strong></td><td>¿Qué grupos naturales hay, sin decirle cuáles?</td><td class="tenue">descriptiva</td><td class="num">13 – 14</td></tr>
+        <tr><td><strong>Reglas de asociación</strong></td><td>¿Qué ocurre junto con qué?</td><td class="tenue">descriptiva</td><td class="num">15</td></tr>
+        <tr><td><strong>Reducción de dimensiones</strong></td><td>¿Cuántas variables hacen falta de verdad?</td><td class="tenue">descriptiva</td><td class="num">16</td></tr>
+      </tbody>
+    </table>
+    <p><strong>Predictiva</strong> = hay una columna objetivo y se quiere acertar.
+       <strong>Descriptiva</strong> = no hay objetivo; se quiere entender la estructura.
+       <span class="tenue">Su proyecto va a pasar por las dos.</span></p>
+  </div>
+</section>
+
+<!-- 7 · la rueda -->
+<section class="slide" data-in="In [7]:">
+  <p class="kicker">El método</p>
+  <h2>CRISP‑DM es un ciclo, no una lista</h2>
+  <div class="rule"></div>
+  <div class="slide-body">
+    <svg class="ciclo" viewBox="0 0 1000 500" role="img"
+         aria-label="Ciclo CRISP-DM con seis fases: comprensión del negocio, comprensión de los datos, preparación, modelado, evaluación y despliegue">
+      <defs>
+        <marker id="pta" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="rgba(140,133,119,.65)"/>
+        </marker>
+        <marker id="ptr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#EE7358"/>
+        </marker>
+      </defs>
+
+      <!-- flechas del ciclo (sentido horario) -->
+      <path class="flecha" marker-end="url(#pta)" d="M 552.0 127.7 A 250 125 0 0 1 685.8 166.4"/>
+      <path class="flecha" marker-end="url(#pta)" d="M 737.8 211.4 A 250 125 0 0 1 737.8 288.6"/>
+      <path class="flecha" marker-end="url(#pta)" d="M 685.8 333.6 A 250 125 0 0 1 552.0 372.3"/>
+      <path class="flecha" marker-end="url(#pta)" d="M 448.0 372.3 A 250 125 0 0 1 314.2 333.6"/>
+      <path class="flecha" marker-end="url(#pta)" d="M 262.2 288.6 A 250 125 0 0 1 262.2 211.4"/>
+      <path class="flecha" marker-end="url(#pta)" d="M 314.2 166.4 A 250 125 0 0 1 448.0 127.7"/>
+
+      <!-- el retroceso permanente: preparación vuelve a comprensión de los datos -->
+      <path class="atras" marker-end="url(#ptr)" d="M 685.5 280.3 A 195 98 0 0 0 685.5 219.7"/>
+
+      <text class="centro" x="500" y="242"><tspan class="f">seis fases</tspan></text>
+      <text class="centro" x="500" y="272">y se vuelve atrás</text>
+
+      <!-- fase 1 -->
+      <g><rect class="caja-fase" x="400" y="48" width="200" height="64" rx="4"/>
+        <text class="n" x="416" y="74">1</text>
+        <text class="t" x="440" y="76">Comprensión</text>
+        <text class="t" x="440" y="99">del negocio</text></g>
+      <!-- fase 2 -->
+      <g><rect class="caja-fase" x="694" y="133" width="200" height="64" rx="4"/>
+        <text class="n" x="710" y="159">2</text>
+        <text class="t" x="734" y="161">Comprensión</text>
+        <text class="t" x="734" y="184">de los datos</text></g>
+      <!-- fase 3 -->
+      <g><rect class="caja-fase" x="694" y="303" width="200" height="64" rx="4"/>
+        <text class="n" x="710" y="329">3</text>
+        <text class="t" x="734" y="331">Preparación</text>
+        <text class="t" x="734" y="354">de los datos</text></g>
+      <!-- fase 4 -->
+      <g><rect class="caja-fase" x="400" y="388" width="200" height="64" rx="4"/>
+        <text class="n" x="416" y="414">4</text>
+        <text class="t" x="440" y="427">Modelado</text></g>
+      <!-- fase 5 -->
+      <g><rect class="caja-fase" x="106" y="303" width="200" height="64" rx="4"/>
+        <text class="n" x="122" y="329">5</text>
+        <text class="t" x="146" y="342">Evaluación</text></g>
+      <!-- fase 6 -->
+      <g><rect class="caja-fase" x="106" y="133" width="200" height="64" rx="4"/>
+        <text class="n" x="122" y="159">6</text>
+        <text class="t" x="146" y="172">Despliegue</text></g>
+    </svg>
+    <p class="tenue">La flecha roja es la que más se recorre en un proyecto real: se prepara, se mira,
+       y hay que volver a entender los datos. <strong>Volver atrás no es haberse equivocado: es el método.</strong></p>
+  </div>
+</section>
+
+<!-- 8 -->
+<section class="slide" data-in="In [8]:">
+  <p class="kicker">Fase 1 · comprensión del negocio</p>
+  <h2>El caso de hoy</h2>
+  <div class="rule"></div>
+  <div class="slide-body">
+    <p class="lead">Bienestar Institucional quiere <em>reducir la deserción</em>. Tiene presupuesto
+       para acompañar a <strong>150 estudiantes</strong> este semestre. Hoy los elige sin criterio.</p>
+    <div class="cols">
+      <div class="caja rojo">
+        <h3>Objetivo de negocio</h3>
+        <p>«Reducir la deserción.»</p>
+        <p class="tenue">No es una tarea de minería: no tiene unidad de análisis, ni momento de corte,
+        ni respuesta verificable.</p>
+      </div>
+      <div class="caja verde">
+        <h3>Pregunta de minería</h3>
+        <p>«Con el historial al cierre del semestre, ¿cuál es la probabilidad de que el estudiante
+        <strong>no se matricule</strong> en el siguiente?»</p>
+        <p class="tenue">Unidad: el estudiante. Corte: fin de semestre. Verificable: en marzo se sabe.</p>
+      </div>
+    </div>
+    <p><strong>Esa traducción es la fase 1.</strong> Un proyecto que no la hace no falla en el
+       modelado: <em>ya falló aquí</em>.</p>
+  </div>
+</section>
+
+<!-- 9 -->
+<section class="slide" data-in="In [9]:">
+  <p class="kicker">Fase 1 · comprensión del negocio</p>
+  <h2>Cuatro casillas que se escriben antes de abrir el archivo</h2>
+  <div class="rule"></div>
+  <div class="slide-body">
+    <table class="holgada">
+      <thead><tr><th>Casilla</th><th>En el caso de hoy</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Pregunta de negocio</strong></td><td>¿A cuáles 150 estudiantes acompañamos?</td></tr>
+        <tr><td><strong>Pregunta de minería</strong></td><td>Probabilidad de no matrícula en el semestre siguiente.</td></tr>
+        <tr><td><strong>Criterio de éxito</strong></td><td>Que entre los 150 señalados haya <em>más retiros reales que al azar</em>. Al azar: ~37 de 150.</td></tr>
+        <tr><td><strong>Restricciones</strong></td><td>Nada de información posterior al momento de decidir. Sin datos personales identificables.</td></tr>
+      </tbody>
+    </table>
+    <div class="caja rojo">
+      <p><strong>El criterio de éxito se escribe hoy, no en noviembre.</strong> Definido después de
+      ver los resultados, siempre se cumple. Esas cuatro casillas son las que ustedes llenan al final
+      de esta clase, con su proyecto.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 10 -->
+<section class="slide" data-in="In [10]:">
+  <p class="kicker">Fase 2 · comprensión de los datos</p>
+  <h2>Las cuatro preguntas — y una quinta</h2>
+  <div class="rule"></div>
+  <div class="slide-body">
+    <div class="cols21">
+      <div>
+        <pre><code>crudo.shape        <span class="c"># 1215 filas, 12 columnas</span>
+crudo.dtypes       <span class="c"># promedio quedó como texto</span>
+crudo.isna().sum() <span class="c"># "solo" faltan datos en distancia</span>
+crudo.describe()   <span class="c"># no resume lo que importa</span>
+
+crudo["retiro"].value_counts(normalize=True)</code></pre>
+        <p class="tenue">Y antes de tocar nada: <code>unique()</code> sobre las columnas sospechosas.</p>
+      </div>
+      <div class="caja verde">
+        <h3>La quinta pregunta: la tasa base</h3>
+        <p>Se retira <em>una cuarta parte</em>.</p>
+        <p>Entonces un modelo que diga <strong>«nadie se retira» acierta el 75 %</strong>.</p>
+        <p class="tenue">Contra ese número se compara todo lo que hagamos hoy. No contra cero.</p>
+      </div>
+    </div>
+    <div class="caja rojo">
+      <p><code>isna()</code> reportó faltantes solo en una columna. Hay un 9 % más escondido en
+      <code>"N/A"</code> y <code>"-99"</code>. <strong>La fase 2 no es correr comandos: es no creerles.</strong></p>
+    </div>
+  </div>
+</section>
+
+<!-- 11 -->
+<section class="slide" data-in="In [11]:">
+  <p class="kicker">Fase 3 · preparación de los datos</p>
+  <h2>Cuatro arreglos, y una decisión</h2>
+  <div class="rule"></div>
+  <div class="slide-body">
+    <table class="holgada">
+      <thead><tr><th>Problema</th><th>Qué se hace</th></tr></thead>
+      <tbody>
+        <tr><td>15 filas repetidas</td><td><code>drop_duplicates()</code></td></tr>
+        <tr><td><code>"3,45"</code> con coma decimal</td><td><code>str.replace(",", ".")</code> + <code>to_numeric(errors="coerce")</code></td></tr>
+        <tr><td><code>"N/A"</code> y <code>-99</code></td><td>que se vuelvan <code>NaN</code> de verdad</td></tr>
+        <tr><td><code>DIURNA</code>, <code>diurna␣␣</code>, <code>Diurna</code></td><td><code>str.strip().str.title()</code></td></tr>
+      </tbody>
+    </table>
+    <div class="caja rojo">
+      <h3>Y la decisión: ¿qué se hace con los faltantes?</h3>
+      <p>Borrar la fila · rellenar con la mediana · dejarlo y usar un modelo que lo tolere.
+      <strong>Las tres cambian el resultado.</strong> Hoy rellenamos por rapidez;
+      en la <em>semana 5</em> se ve el precio —y por qué a veces <em>el que falte</em> es el dato más
+      informativo de la columna.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 12 -->
+<section class="slide" data-in="In [12]:">
+  <p class="kicker">Fase 3 · preparación de los datos</p>
+  <h2>Partir en dos antes de modelar</h2>
+  <div class="rule"></div>
+  <div class="slide-body">
+    <pre><code>X_tr, X_te, y_tr, y_te = train_test_split(
+        X, y, test_size=<span class="o">0.30</span>, random_state=<span class="o">42</span>, stratify=y)</code></pre>
+    <div class="cols">
+      <div class="caja azul">
+        <h3>Por qué</h3>
+        <p>El modelo <strong>memoriza</strong> lo que se le muestre. Evaluarlo con los mismos datos con
+        que aprendió es un examen con el cuaderno abierto.</p>
+      </div>
+      <div class="caja verde">
+        <h3><code>stratify=y</code></h3>
+        <p>Mantiene la misma proporción de retiros a lado y lado. Sin eso, con clases desbalanceadas,
+        el azar puede dejar la prueba sin casos que detectar.</p>
+      </div>
+    </div>
+    <p class="tenue">Hoy solo se usa. En la <strong>semana 6</strong> se ve qué es sobreajuste y por qué
+       esta línea es la que separa un resultado creíble de uno inventado.</p>
+  </div>
+</section>
+
+<!-- 13 -->
+<section class="slide" data-in="In [13]:">
+  <p class="kicker">Fase 4 · modelado</p>
+  <h2>Primero el modelo tonto</h2>
+  <div class="rule"></div>
+  <div class="slide-body">
+    <pre><code><span class="k">from</span> sklearn.dummy <span class="k">import</span> DummyClassifier
+tonto = DummyClassifier(strategy=<span class="s">"most_frequent"</span>).fit(X_tr, y_tr)
+
+<span class="k">from</span> sklearn.tree <span class="k">import</span> DecisionTreeClassifier
+arbol = DecisionTreeClassifier(max_depth=<span class="o">3</span>, random_state=<span class="o">42</span>).fit(X_tr, y_tr)</code></pre>
+    <div class="cols">
+      <div class="caja verde">
+        <h3>El tonto no es un chiste</h3>
+        <p>Predice siempre la clase mayoritaria. Es <strong>la vara</strong>: si su modelo no le gana,
+        su modelo no aprendió nada, por sofisticado que sea.</p>
+      </div>
+      <div class="caja azul">
+        <h3>Y un árbol de profundidad 3</h3>
+        <p>Se escoge porque <strong>se puede leer</strong>: sale impreso en reglas
+        <em>si… entonces…</em>. La fase 5 va a necesitar entenderlo, no solo puntuarlo.</p>
+      </div>
+    </div>
+    <p class="tenue">Todo el bloque 3 —semanas 6 a 9— es esta fase. Hoy son cuatro líneas.</p>
+  </div>
+</section>
+
+<!-- 14 · el revelado -->
+<section class="slide" data-in="In [14]:" data-reveal>
+  <p class="kicker">Fase 5 · evaluación</p>
+  <h2>El árbol acierta el 96 %</h2>
+  <div class="rule"></div>
+  <div class="slide-body top">
+    <div class="antes">
+      <p class="lead">Tonto: <strong>0.75</strong> · Árbol: <strong>0.96</strong>.
+         <em>¿Damos el proyecto por bueno?</em></p>
+      <div class="caja">
+        <p>Antes de responder: en un problema de deserción con una cuarta parte de retiros,
+        <strong>un salto así no ocurre</strong>. Cuando un resultado es demasiado bueno, la fase 5
+        obliga a preguntar de dónde salió.</p>
+      </div>
+      <button class="rv-btn" type="button">de dónde salió →</button>
+    </div>
+
+    <div class="oculto">
+      <pre><code>arbol.feature_importances_  →  matricula_siguiente_Sin pagar   <span class="o">0.94</span>
+                               promedio_anterior               <span class="o">0.04</span>
+                               asignaturas_repetidas           <span class="o">0.02</span></code></pre>
+      <div class="caja rojo">
+        <h3>Fuga de información</h3>
+        <p><code>matricula_siguiente</code> dice si pagó la matrícula del semestre siguiente.
+        <strong>Es el retiro escrito con otras palabras</strong> —y no existe en el momento de decidir.</p>
+        <p>Es exactamente la restricción que escribimos en la fase 1. La violamos sin darnos cuenta.</p>
+      </div>
+      <p>Se saca la columna, se vuelve a la fase 3 y se reentrena: <strong>tonto 0.75 · árbol ≈ 0.78</strong>.
+      <em>Ese</em> es el resultado real.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 15 -->
+<section class="slide" data-in="In [15]:">
+  <p class="kicker">Fase 5 · evaluación</p>
+  <h2>Cuando el acierto no alcanza: mirar la tabla</h2>
+  <div class="rule"></div>
+  <div class="slide-body">
+    <div class="cols21">
+      <div>
+        <table class="holgada">
+          <thead><tr><th></th><th class="num">predice: se queda</th><th class="num">predice: se retira</th></tr></thead>
+          <tbody>
+            <tr><td>real: se queda</td><td class="num">262</td><td class="num">10</td></tr>
+            <tr><td><strong>real: se retira</strong></td><td class="num"><em>71</em></td><td class="num">21</td></tr>
+          </tbody>
+        </table>
+        <p class="tenue">Los números exactos salen en el notebook; la lectura es la misma.</p>
+      </div>
+      <div class="caja rojo">
+        <h3>Léala por filas</h3>
+        <p>De los que <strong>sí se retiraron</strong>, el modelo señaló a 21 de 92.</p>
+        <p>Bienestar se juega en <em>a quién llama</em>. El acierto global no responde eso.</p>
+      </div>
+    </div>
+    <div class="caja">
+      <p><strong>¿Se aprueba o se devuelve?</strong> Se devuelve a la fase 2: faltan variables del
+      momento correcto —asistencia, notas parciales, pagos anteriores—. <em>Decidir eso es la fase 5</em>,
+      no un anexo del modelado. Precisión, exhaustividad y F1: <span class="tenue">semana 7</span>.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 16 -->
+<section class="slide" data-in="In [16]:">
+  <p class="kicker">Fase 6 · despliegue</p>
+  <h2>Entregar la decisión, no el modelo</h2>
+  <div class="rule"></div>
+  <div class="slide-body">
+    <p class="lead">Aquí el despliegue no es un servidor: es <em>la lista de los 150 estudiantes</em>
+       que Bienestar va a llamar, ordenada por probabilidad.</p>
+    <div class="cols3">
+      <div class="caja">
+        <h3>Con qué se entrenó</h3>
+        <p class="tenue">Qué datos, de cuándo. Un modelo de 2025‑1 no vale para siempre.</p>
+      </div>
+      <div class="caja">
+        <h3>Qué le falta</h3>
+        <p class="tenue">Sin asistencia, sin notas parciales, con una columna descartada por fuga.</p>
+      </div>
+      <div class="caja">
+        <h3>Qué cuesta errar</h3>
+        <p class="tenue">Señalar de más: una llamada. Señalar de menos: un estudiante que se va.</p>
+      </div>
+    </div>
+    <div class="caja verde">
+      <p><strong>Y el ciclo se cierra:</strong> en marzo se sabe a cuántos se retuvo. Ese resultado es
+      la entrada de la siguiente vuelta. Por eso se dibuja en círculo.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 17 -->
+<section class="slide" data-in="In [17]:">
+  <p class="kicker">El mapa</p>
+  <h2>Dónde vive cada fase en el semestre</h2>
+  <div class="rule"></div>
+  <div class="slide-body">
+    <div class="fases">
+      <div class="fase"><b>1</b><span>Negocio</span></div>
+      <div class="fase on"><b>2</b><span>Datos</span></div>
+      <div class="fase on"><b>3</b><span>Preparación</span></div>
+      <div class="fase"><b>4</b><span>Modelado</span></div>
+      <div class="fase"><b>5</b><span>Evaluación</span></div>
+      <div class="fase"><b>6</b><span>Despliegue</span></div>
+    </div>
+    <table class="holgada">
+      <thead><tr><th>Fase</th><th>Qué se ve</th><th class="num">Semanas</th></tr></thead>
+      <tbody>
+        <tr><td><strong>1</strong></td><td>Su proyecto: hoy y el 22 de agosto</td><td class="num">2 – 3</td></tr>
+        <tr><td><strong>2</strong></td><td>Fuentes y formatos · EDA y visualización</td><td class="num">3 – 4</td></tr>
+        <tr><td><strong>3</strong></td><td>Ruido, duplicados, imputación, normalización</td><td class="num">5</td></tr>
+        <tr><td><strong>4</strong></td><td>Árboles, KNN, Naive Bayes, SVM · regresión · agrupamiento · reglas</td><td class="num">6 – 16</td></tr>
+        <tr><td><strong>5</strong></td><td>Métricas, matriz de confusión, validación cruzada</td><td class="num">7 y 9</td></tr>
+        <tr><td><strong>6</strong></td><td>Informe final y sustentación</td><td class="num">17 y finales</td></tr>
+      </tbody>
+    </table>
+    <p class="tenue">Las dos fases resaltadas se llevan <strong>tres semanas de clase</strong>. En un
+       proyecto real se llevan el 60‑80 % del tiempo. No es casualidad.</p>
+  </div>
+</section>
+
+<!-- 18 -->
+<section class="slide" data-in="In [18]:">
+  <p class="kicker">Ahora ustedes · 20 minutos</p>
+  <h2>La fase 1 de su proyecto</h2>
+  <div class="rule"></div>
+  <div class="slide-body">
+    <p class="lead">Por grupo, en <code>S02_Ficha_de_proyecto.html</code>: las <em>cuatro casillas</em>
+       con sus datos, más los dos candidatos que trajeron.</p>
+    <div class="cols">
+      <div class="caja verde">
+        <h3>Lo que se entrega hoy, antes de las 10:00</h3>
+        <ul>
+          <li>Pregunta de negocio y pregunta de minería.</li>
+          <li>Criterio de éxito, con número.</li>
+          <li>Los dos candidatos con su <code>shape</code>.</li>
+        </ul>
+      </div>
+      <div class="caja rojo">
+        <h3>Los errores de todos los semestres</h3>
+        <ul>
+          <li>«Analizar los datos de X» — eso no es una pregunta.</li>
+          <li>Un objetivo que no está en el archivo.</li>
+          <li>Una columna objetivo que <strong>ya contiene la respuesta</strong>: la fuga de la lámina 14.</li>
+        </ul>
+      </div>
+    </div>
+    <p class="tenue">Paso por los seis grupos. Lo que quede aprobado hoy es la mitad de la propuesta
+       del <strong>sábado 22</strong>.</p>
+  </div>
+</section>
+
+<!-- 19 -->
+<section class="slide" data-in="In [19]:">
+  <p class="kicker">Cierre</p>
+  <h2>Cinco ideas de hoy</h2>
+  <div class="rule"></div>
+  <div class="slide-body">
+    <ul>
+      <li>La fase 1 no se hace en el computador: <strong>traducir el problema del negocio a una pregunta verificable</strong>.</li>
+      <li>El criterio de éxito y la <strong>tasa base</strong> se escriben <em>antes</em> de modelar.</li>
+      <li>El <strong>modelo tonto</strong> es la vara. Si no le gana, no aprendió nada.</li>
+      <li>Un resultado demasiado bueno es una alarma: <strong>fuga de información</strong>.</li>
+      <li>Volver atrás <strong>es</strong> el método. CRISP‑DM se dibuja en círculo por eso.</li>
+    </ul>
+    <div class="caja azul">
+      <p><strong>Sábado 15, 8:00 — Sala 601:</strong> fuentes y formatos. De dónde salen los datos que
+      no vienen en un CSV limpio: JSON, API, SQL, y el archivo que el portal publica en Excel con
+      tres filas de encabezado.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 20 -->
+<section class="slide cover" data-in="Out[19]:">
+  <div class="slide-body">
+    <h1>¿Preguntas?</h1>
+    <div class="rule"></div>
+    <p class="meta">
+      Minería de Datos · 26160 · grupo 020‑81<br>
+      Jhon Alejandro Varón Robayo<br>
+      <b>Ficha de la fase 1 — hoy antes de las 10:00</b><br>
+      Propuesta de datos — sábado 22 de agosto
+    </p>
+  </div>
+</section>
+
+</main>
+
+<div class="bar" role="toolbar" aria-label="Navegación">
+  <button id="prev" type="button" aria-label="Diapositiva anterior">←</button>
+  <button id="next" type="button" aria-label="Diapositiva siguiente">→</button>
+  <button id="menos" type="button" aria-label="Reducir tamaño de letra">A−</button>
+  <button id="mas" type="button" aria-label="Aumentar tamaño de letra">A+</button>
+  <span class="zoom" id="zoom">100 %</span>
+  <span class="track"><span class="fill" id="fill"></span></span>
+  <span class="counter" id="counter">[1] / 20</span>
+  <span class="hint">← → avanzar · + − tamaño · F pantalla completa · Ctrl+P imprimir</span>
+</div>
+
+<script>
+(function () {
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var fill = document.getElementById('fill');
+  var counter = document.getElementById('counter');
+  var zoom = document.getElementById('zoom');
+  var i = 0;
+
+  /* ---- escala tipográfica, persistente entre sesiones ---- */
+  var esc = parseFloat(localStorage.getItem('md-esc')) || 1;
+
+  function aplicarEsc() {
+    esc = Math.max(0.7, Math.min(1.8, esc));
+    document.documentElement.style.setProperty('--esc', esc);
+    zoom.textContent = Math.round(esc * 100) + ' %';
+    try { localStorage.setItem('md-esc', esc); } catch (e) {}
+  }
+
+  function show(n) {
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach(function (s, k) { s.classList.toggle('is-live', k === i); });
+    fill.style.width = ((i + 1) / slides.length * 100) + '%';
+    counter.textContent = '[' + (i + 1) + '] / ' + slides.length;
+    if (history.replaceState) history.replaceState(null, '', '#' + (i + 1));
+  }
+
+  document.getElementById('next').addEventListener('click', function () { show(i + 1); });
+  document.getElementById('prev').addEventListener('click', function () { show(i - 1); });
+  document.getElementById('mas').addEventListener('click', function () { esc += 0.1; aplicarEsc(); });
+  document.getElementById('menos').addEventListener('click', function () { esc -= 0.1; aplicarEsc(); });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); show(i + 1); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); show(i - 1); }
+    else if (e.key === 'Home') { e.preventDefault(); show(0); }
+    else if (e.key === 'End') { e.preventDefault(); show(slides.length - 1); }
+    else if (e.key === '+' || e.key === '=') { e.preventDefault(); esc += 0.1; aplicarEsc(); }
+    else if (e.key === '-' || e.key === '_') { e.preventDefault(); esc -= 0.1; aplicarEsc(); }
+    else if (e.key === '0') { e.preventDefault(); esc = 1; aplicarEsc(); }
+    else if (e.key === 'f' || e.key === 'F') {
+      if (!document.fullscreenElement) { document.documentElement.requestFullscreen(); }
+      else { document.exitFullscreen(); }
+    }
+  });
+
+  /* ---- el revelado de la fuga de información (lámina 14) ---- */
+  Array.prototype.forEach.call(document.querySelectorAll('[data-reveal] .rv-btn'), function (b) {
+    b.addEventListener('click', function () {
+      b.closest('[data-reveal]').classList.add('mostrado');
+    });
+  });
+
+  aplicarEsc();
+  var inicio = parseInt((location.hash || '').replace('#', ''), 10);
+  show(isNaN(inicio) ? 0 : inicio - 1);
+})();
+</script>
+
+</body>
+</html>

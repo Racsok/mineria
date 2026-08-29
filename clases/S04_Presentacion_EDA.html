@@ -1,0 +1,591 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Minería de Datos · Sesión 4 · Análisis exploratorio</title>
+<style>
+:root{
+  --esc:1;              /* escala tipográfica global — se ajusta con + y − */
+
+  --tinta:#100F0C;
+  --panel:#1A1814;
+  --linea:rgba(140,133,119,.24);
+  --texto:#E6E0D4;
+  --tenue:#98907F;
+  --papel:#F8F5EE;
+
+  --ambar:#F0AC46;   /* ejecución, foco */
+  --verde:#6ED09A;   /* dato limpio */
+  --rojo:#EE7358;    /* dato sucio, alerta */
+  --azul:#82B6E8;    /* modelo */
+
+  --mono:"Cascadia Mono",Consolas,"SF Mono",Menlo,"DejaVu Sans Mono",monospace;
+  --sans:"Segoe UI Variable Display","Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--tinta);
+  color:var(--texto);
+  font-family:var(--sans);
+  line-height:1.45;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* fondo: el punteado de una celda de notebook */
+body::before{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:radial-gradient(rgba(152,144,127,.11) 1px,transparent 1px);
+  background-size:26px 26px;
+}
+
+/* ---------- armazón ----------
+   Toda la tipografía cuelga de --u, que se ata al lado menor de un 16:9. */
+.deck{position:relative;z-index:1}
+.slide{
+  --w:min(100vw - 1.5rem, calc((100vh - 4.2rem) * 16 / 9), 1800px);
+  --u:calc(var(--w) * 0.0145 * var(--esc));
+  font-size:var(--u);
+
+  display:none;
+  width:var(--w);
+  aspect-ratio:16/9;
+  margin:.7rem auto 0;
+  padding:1.25em 1.7em 1.1em 1.7em;
+  padding-left:3.6em;
+  background:linear-gradient(155deg,var(--panel) 0%,#0E0D0A 100%);
+  border:1px solid var(--linea);
+  border-radius:3px;
+  box-shadow:0 24px 60px rgba(0,0,0,.55);
+  overflow:hidden;
+  position:relative;
+}
+.slide.is-live{display:flex;flex-direction:column}
+
+/* el canal izquierdo: el prompt In[ ] del notebook */
+.slide::before{
+  content:attr(data-in);
+  position:absolute;left:0;top:0;bottom:0;
+  width:2.6em;
+  border-right:1px solid var(--linea);
+  background:rgba(0,0,0,.22);
+  font-family:var(--mono);
+  font-size:.62em;
+  color:var(--tenue);
+  padding-top:2.4em;
+  text-align:center;
+  letter-spacing:.02em;
+}
+
+/* ---------- tipografía ---------- */
+h1{font-size:3.5em;line-height:1.02;margin:0 0 .12em;font-weight:650;letter-spacing:-.022em;color:var(--papel)}
+h2{font-size:2.05em;line-height:1.1;margin:0 0 .06em;font-weight:640;letter-spacing:-.016em;color:var(--papel)}
+.kicker{font-family:var(--mono);font-size:.86em;letter-spacing:.15em;text-transform:uppercase;
+        color:var(--ambar);margin:0 0 .5em}
+.rule{height:.12em;width:3.6em;background:var(--ambar);margin:.4em 0 .7em;border-radius:2px}
+
+.slide-body{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;
+            gap:.75em;overflow:auto;scrollbar-width:thin;scrollbar-color:var(--linea) transparent}
+.slide-body.top{justify-content:flex-start}
+
+p{margin:0 0 .4em;font-size:1.18em}
+.lead{font-size:1.5em;line-height:1.3;color:#F2EDE3}
+.tenue{color:var(--tenue)}
+strong{color:var(--papel);font-weight:650}
+em{color:var(--ambar);font-style:normal;font-weight:600}
+ul{margin:.15em 0 .3em;padding-left:1.05em}
+li{margin:.34em 0;font-size:1.16em;line-height:1.35}
+li::marker{color:var(--ambar)}
+code{font-family:var(--mono);background:rgba(240,172,70,.14);color:var(--ambar);
+     padding:.05em .3em;border-radius:3px;font-size:.94em}
+
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:1.4em;align-items:start}
+.cols3{display:grid;grid-template-columns:repeat(3,1fr);gap:1em}
+.cols21{display:grid;grid-template-columns:1.35fr 1fr;gap:1.2em;align-items:start}
+
+.caja{border:1px solid var(--linea);border-left:.16em solid var(--ambar);
+      background:rgba(0,0,0,.26);border-radius:3px;padding:.75em .95em}
+.caja h3{margin:0 0 .25em;font-size:1.2em;color:var(--papel);font-weight:640;line-height:1.2}
+.caja p,.caja li{font-size:1.06em;margin:.16em 0}
+.caja ul{padding-left:1em}
+.caja.verde{border-left-color:var(--verde)}
+.caja.rojo{border-left-color:var(--rojo)}
+.caja.azul{border-left-color:var(--azul)}
+
+/* ---------- tablas ---------- */
+table{border-collapse:collapse;width:100%;font-size:1.06em}
+th,td{padding:.3em .5em;text-align:left;border-bottom:1px solid var(--linea);line-height:1.28}
+th{color:var(--tenue);font-weight:600;font-size:.82em;text-transform:uppercase;letter-spacing:.07em}
+td.num,th.num{text-align:right;font-family:var(--mono)}
+tr.total td{border-top:.1em solid var(--ambar);border-bottom:none;color:var(--papel);font-weight:650}
+table.holgada th,table.holgada td{padding:.42em .5em}
+
+/* ---------- código ---------- */
+pre{font-family:var(--mono);font-size:1em;line-height:1.5;
+    background:#0B0A08;border:1px solid var(--linea);border-left:.16em solid var(--verde);
+    border-radius:3px;padding:.7em .9em;margin:.3em 0;overflow:auto;color:#E4DDCD}
+pre .c{color:var(--tenue)}
+pre .k{color:var(--ambar)}
+pre .s{color:var(--verde)}
+pre .o{color:var(--azul)}
+
+/* ---------- crisp-dm: la rueda ---------- */
+.ciclo{width:100%;max-height:62vh;display:block;margin:.1em auto}
+.ciclo .caja-fase{fill:rgba(0,0,0,.34);stroke:rgba(140,133,119,.34);stroke-width:1.2}
+.ciclo .n{fill:#F0AC46;font-family:var(--mono);font-size:15px;font-weight:600}
+.ciclo .t{fill:#E6E0D4;font-family:"Segoe UI",system-ui,sans-serif;font-size:20px;font-weight:600}
+.ciclo .flecha{fill:none;stroke:rgba(140,133,119,.5);stroke-width:2}
+.ciclo .atras{fill:none;stroke:#EE7358;stroke-width:2;stroke-dasharray:7 6}
+.ciclo .centro{fill:#98907F;font-family:var(--mono);font-size:16px;text-anchor:middle;letter-spacing:.08em}
+.ciclo .centro tspan.f{fill:#F8F5EE}
+
+/* fases en fila (lámina de resumen) */
+.fases{display:grid;grid-template-columns:repeat(6,1fr);gap:.5em;margin-top:.3em}
+.fase{border:1px solid var(--linea);border-radius:3px;background:rgba(0,0,0,.26);
+      padding:.6em .4em;text-align:center}
+.fase b{display:block;font-family:var(--mono);color:var(--ambar);font-size:.92em;margin-bottom:.25em}
+.fase span{font-size:1.02em;color:var(--texto);line-height:1.22;display:block}
+.fase.on{border-color:var(--ambar);background:rgba(240,172,70,.13)}
+
+/* ---------- revelado ---------- */
+.oculto{display:none}
+.mostrado .oculto{display:block}
+.mostrado .antes{display:none}
+.rv-btn{font-family:var(--mono);font-size:.8em;background:transparent;color:var(--tenue);
+        border:1px solid var(--linea);border-radius:3px;padding:.25em .7em;cursor:pointer;
+        align-self:flex-start;margin-top:.2em}
+.rv-btn:hover{color:var(--ambar);border-color:var(--ambar)}
+
+/* ---------- portada ---------- */
+.slide.cover{justify-content:center;background:linear-gradient(150deg,#211D15 0%,#0C0B09 70%)}
+.cover h1{font-size:4.4em}
+.cover .meta{font-family:var(--mono);color:var(--tenue);font-size:1.1em;line-height:1.95;margin-top:.7em}
+.cover .meta b{color:var(--ambar);font-weight:600}
+
+/* ---------- barra inferior ---------- */
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:5;
+     display:flex;align-items:center;gap:.6rem;
+     padding:.35rem clamp(.6rem,1.6vw,1.6rem);
+     background:linear-gradient(to top,rgba(16,15,12,.97),rgba(16,15,12,.72));
+     border-top:1px solid var(--linea);
+     font-family:var(--mono);font-size:.78rem;color:var(--tenue)}
+.bar button{background:transparent;border:1px solid var(--linea);color:var(--tenue);
+            border-radius:3px;min-width:1.9rem;height:1.7rem;cursor:pointer;font-size:.85rem;line-height:1}
+.bar button:hover{color:var(--ambar);border-color:var(--ambar)}
+.track{flex:1;height:2px;background:var(--linea);border-radius:2px;overflow:hidden}
+.fill{display:block;height:100%;width:0;background:var(--ambar);transition:width .28s ease}
+.zoom{color:var(--ambar)}
+.hint{display:none}
+@media (min-width:1000px){.hint{display:inline}}
+
+@media (prefers-reduced-motion:reduce){*{transition:none !important;animation:none !important}}
+
+/* ---------- impresión: una diapositiva por página ---------- */
+@media print{
+  body{background:#fff;color:#111}
+  body::before{display:none}
+  .bar{display:none}
+  .slide{display:block !important;page-break-after:always;break-after:page;
+         width:100%;aspect-ratio:auto;min-height:0;box-shadow:none;font-size:11pt;
+         border:none;background:#fff;color:#111;margin:0;padding:1.1cm}
+  .slide::before{display:none}
+  h1,h2,strong,.caja h3{color:#000}
+  .lead{color:#111}
+  .tenue,th{color:#555}
+  .slide-body{display:block;overflow:visible}
+  pre{background:#F3F1EC;color:#111;border-left-color:#2E7D5B}
+  .caja{background:#FAF8F4;border-color:#CCC}
+  em{color:#8A5B00}
+  .oculto{display:block !important}
+  .rv-btn{display:none}
+  .ciclo .t{fill:#111} .ciclo .caja-fase{fill:#F5F2EC;stroke:#BBB} .ciclo .centro{fill:#555}
+  .ciclo .centro tspan.f{fill:#111} .ciclo .flecha{stroke:#999} .ciclo .n{fill:#8A5B00}
+}
+</style>
+</head>
+<body>
+
+<main class="deck" id="deck">
+
+<!-- 1 -->
+<section class="slide cover" data-in="In [1]:">
+  <div class="slide-body">
+    <p class="kicker">Universidad Distrital Francisco José de Caldas · Ingeniería de Sistemas</p>
+    <h1>¿Qué hay<br>aquí adentro?</h1>
+    <div class="rule"></div>
+    <p class="lead">Sesión 4 — análisis exploratorio I: perfilar un archivo que no se conoce</p>
+    <p class="meta">
+      Minería de Datos · <b>26160</b> · grupo 020‑81<br>
+      Jueves <b>20 de agosto de 2026</b> · 8:00 – 10:00 · Sala de Informática <b>702</b><br>
+      Docente: Jhon Alejandro Varón Robayo
+    </p>
+  </div>
+</section>
+
+<!-- 2 -->
+<section class="slide" data-in="In [2]:">
+  <p class="kicker">Dónde estamos</p>
+  <h2>Fase 2, en serio</h2>
+  <div class="rule"></div>
+  <div class="slide-body">
+    <div class="fases">
+      <div class="fase"><b>1</b><span>Negocio</span></div>
+      <div class="fase on"><b>2</b><span>Datos</span></div>
+      <div class="fase"><b>3</b><span>Preparación</span></div>
+      <div class="fase"><b>4</b><span>Modelado</span></div>
+      <div class="fase"><b>5</b><span>Evaluación</span></div>
+      <div class="fase"><b>6</b><span>Despliegue</span></div>
+    </div>
+    <div class="cols">
+      <div class="caja azul">
+        <h3>El sábado</h3>
+        <p>Conseguir los datos y unirlos sin romperlos: CSV, JSON, SQL, API. Y el <code>merge</code>
+        que multiplicó 400 filas en 1.200.</p>
+      </div>
+      <div class="caja verde">
+        <h3>Hoy</h3>
+        <p>El archivo ya está armado. La pregunta es <strong>qué hay adentro</strong> — y qué de eso
+        está mal.</p>
+      </div>
+    </div>
+    <div class="caja rojo">
+      <p><strong>Regla de hoy: ningún gráfico.</strong> Los gráficos son el sábado. Un gráfico bonito
+      sobre una columna mal entendida es la forma más rápida de <em>equivocarse con confianza</em>.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 3 -->
+<section class="slide" data-in="In [3]:">
+  <p class="kicker">El archivo de hoy</p>
+  <h2>Siete años de matrículas</h2>
+  <div class="rule"></div>
+  <div class="slide-body">
+    <p class="lead">Registro Académico entrega <strong>6.030 filas × 14 columnas</strong>, de 2019‑1 a
+       2025‑2. Nadie ha mirado ese archivo antes.</p>
+    <table class="holgada">
+      <thead><tr><th>Grupo de columnas</th><th>Cuáles</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Identificación</strong></td><td><code>id</code>, <code>periodo</code></td></tr>
+        <tr><td><strong>Académicas</strong></td><td><code>programa</code>, <code>jornada</code>, <code>promedio</code>, <code>creditos_inscritos</code></td></tr>
+        <tr><td><strong>Socioeconómicas</strong></td><td><code>edad</code>, <code>estrato</code>, <code>ingreso_familiar</code>, <code>municipio</code>, <code>distancia_km</code>, <code>horas_trabajo_semana</code>, <code>apoyo_financiero</code></td></tr>
+        <tr><td><strong>Objetivo</strong></td><td><code>retiro</code></td></tr>
+      </tbody>
+    </table>
+    <p class="tenue">Es el mismo caso de la sesión 2 —la deserción—, ahora con el archivo completo y
+       no con cinco filas de juguete.</p>
+  </div>
+</section>
+
+<!-- 4 -->
+<section class="slide" data-in="In [4]:">
+  <p class="kicker">El método</p>
+  <h2>Las cuatro preguntas — y qué se hace con la respuesta</h2>
+  <div class="rule"></div>
+  <div class="slide-body">
+    <table class="holgada">
+      <thead><tr><th>Se corre</th><th>Se pregunta</th><th>Se anota</th></tr></thead>
+      <tbody>
+        <tr><td><code>shape</code></td><td>¿alcanza para partir en entrenamiento y prueba?</td><td class="tenue">sí / no</td></tr>
+        <tr><td><code>dtypes</code></td><td>¿pandas entendió cada columna como lo que es?</td><td class="tenue">las que no</td></tr>
+        <tr><td><code>isna().sum()</code></td><td>¿dónde faltan datos… <em>de los que pandas reconoce</em>?</td><td class="tenue">% por columna</td></tr>
+        <tr><td><code>describe()</code></td><td>¿hay valores <strong>imposibles</strong>?</td><td class="tenue">los imposibles</td></tr>
+      </tbody>
+    </table>
+    <div class="caja">
+      <p>Lo nuevo no son los comandos: es la <strong>disciplina</strong>. Cada respuesta se anota, y de
+      esa lista sale el trabajo de las semanas 4 y 5. <em>Sin lista escrita, la fase 2 no ocurrió.</em></p>
+    </div>
+  </div>
+</section>
+
+<!-- 5 -->
+<section class="slide" data-in="In [5]:">
+  <p class="kicker">La lámina clave</p>
+  <h2><code>describe()</code> se lee buscando lo imposible</h2>
+  <div class="rule"></div>
+  <div class="slide-body">
+    <table class="holgada">
+      <thead><tr><th>Lo que muestra</th><th>Lo que significa</th></tr></thead>
+      <tbody>
+        <tr><td><code>edad</code> máx = <em>99</em></td><td>Nadie de 99 años está matriculado. Es un <strong>código de «no informa»</strong> escrito como número.</td></tr>
+        <tr><td><code>estrato</code> máx = <em>9</em></td><td>No existe el estrato 9. Una categoría disfrazada de número.</td></tr>
+        <tr><td><code>ingreso_familiar</code>: media ≫ mediana</td><td>Distribución sesgada. <strong>El promedio de esa columna no describe a nadie.</strong></td></tr>
+      </tbody>
+    </table>
+    <div class="caja rojo">
+      <p><strong>Ninguna de las tres la detecta <code>isna()</code>.</strong> Los tres valores son
+      «datos» perfectamente válidos para pandas. Por eso la fase 2 <em>no se puede automatizar del
+      todo</em>: hay que saber qué es imposible en este dominio.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 6 -->
+<section class="slide" data-in="In [6]:">
+  <p class="kicker">La pregunta más barata</p>
+  <h2><code>nunique()</code> clasifica la tabla en un segundo</h2>
+  <div class="rule"></div>
+  <div class="slide-body">
+    <div class="cols3">
+      <div class="caja">
+        <h3>= número de filas</h3>
+        <p><strong>Identificador.</strong> <code>id</code>. No se modela con él —y meterlo es una fuga
+        silenciosa.</p>
+      </div>
+      <div class="caja verde">
+        <h3>Entre 2 y ~20</h3>
+        <p><strong>Categórica</strong>, aunque esté escrita con números: <code>estrato</code>,
+        <code>programa</code>, <code>municipio</code>.</p>
+      </div>
+      <div class="caja azul">
+        <h3>Cientos o miles</h3>
+        <p><strong>Continua.</strong> <code>ingreso_familiar</code>, <code>distancia_km</code>,
+        <code>promedio</code>.</p>
+      </div>
+    </div>
+    <div class="caja rojo">
+      <p><strong>La trampa del tipo.</strong> <code>estrato</code> es <code>float64</code> y
+      <code>describe()</code> le calculó media 2,7. <em>Un estrato promedio de 2,7 no significa nada.</em>
+      El tipo que pandas asigna no es el tipo que la variable tiene.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 7 -->
+<section class="slide" data-in="In [7]:">
+  <p class="kicker">Faltantes</p>
+  <h2>No importa cuántos: importa <em>de quién</em></h2>
+  <div class="rule"></div>
+  <div class="slide-body">
+    <p class="lead">Al <code>ingreso_familiar</code> le falta el <strong>12 %</strong>. Ese número, solo,
+       no sirve para decidir nada.</p>
+    <pre><code>falta = df[<span class="s">"ingreso_familiar"</span>].isna()
+falta.groupby(df[<span class="s">"estrato"</span>]).mean()</code></pre>
+    <div class="cols">
+      <div class="caja verde">
+        <h3>Si falta parejo</h3>
+        <p>Rellenar con la mediana es defendible.</p>
+      </div>
+      <div class="caja rojo">
+        <h3>Si falta en un grupo</h3>
+        <p>Rellenar <strong>inventa plata</strong> justo donde se quiere estudiar, y el modelo sale
+        optimista con quien peor está.</p>
+      </div>
+    </div>
+    <p class="tenue">La decisión —y su justificación escrita— es la semana 5. Hoy solo se <em>mide</em>.</p>
+  </div>
+</section>
+
+<!-- 8 -->
+<section class="slide" data-in="In [8]:">
+  <p class="kicker">Duplicados</p>
+  <h2>Dos preguntas distintas, y hay que hacer las dos</h2>
+  <div class="rule"></div>
+  <div class="slide-body">
+    <div class="cols">
+      <div class="caja verde">
+        <h3><code>df.duplicated().sum()</code></h3>
+        <p>Filas <strong>idénticas en todo</strong>. Casi siempre es un error de exportación o de haber
+        pegado dos reportes. Se eliminan.</p>
+      </div>
+      <div class="caja rojo">
+        <h3><code>df["id"].duplicated().sum()</code></h3>
+        <p>Mismo estudiante, <strong>datos distintos</strong>. Eso <em>no</em> es un duplicado: son dos
+        registros, y quedarse con uno es una decisión de negocio.</p>
+      </div>
+    </div>
+    <div class="caja">
+      <p>Aquí hay 30 del primer tipo. En un archivo con historia —siete años— el segundo tipo es
+      normal: <strong>una fila por estudiante y periodo</strong>. Confundirlos rompe la partición
+      train/test, igual que el <code>merge</code> del sábado.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 9 -->
+<section class="slide" data-in="In [9]:">
+  <p class="kicker">La lámina clave</p>
+  <h2>Un atípico se borra cuando es <em>falso</em>, no cuando es grande</h2>
+  <div class="rule"></div>
+  <div class="slide-body">
+    <table class="holgada">
+      <thead><tr><th>Columna</th><th>El atípico es…</th><th>Qué se hace</th></tr></thead>
+      <tbody>
+        <tr><td><code>edad = 99</code></td><td>error de codificación</td><td>se vuelve <code>NaN</code></td></tr>
+        <tr><td><code>estrato = 9</code></td><td>error de codificación</td><td>se vuelve <code>NaN</code></td></tr>
+        <tr><td><code>ingreso_familiar</code> = 38 M</td><td><strong>un dato real y poco frecuente</strong></td><td>se conserva</td></tr>
+      </tbody>
+    </table>
+    <div class="caja rojo">
+      <p>Borrar los ingresos altos sería borrar <strong>exactamente la parte de la población que hace
+      que la pregunta tenga sentido</strong>. La regla del rango intercuartílico los señala a los tres
+      por igual: <em>la regla señala, usted decide</em>.</p>
+    </div>
+    <p class="tenue">Y una consecuencia: después de corregir <code>edad</code> y <code>estrato</code>,
+       el <code>describe()</code> cambia. <strong>Los datos no cambiaron: cambió lo que sabemos de ellos.</strong></p>
+  </div>
+</section>
+
+<!-- 10 -->
+<section class="slide" data-in="In [10]:">
+  <p class="kicker">Lo que se llevan al proyecto</p>
+  <h2><code>perfilar(df)</code> — todo lo anterior en una tabla</h2>
+  <div class="rule"></div>
+  <div class="slide-body">
+    <pre><code><span class="k">def</span> perfilar(df):
+    <span class="c"># por columna: tipo · distintos · faltan_% · moda</span>
+    <span class="c">#              min · mediana · media · max  (si es numérica)</span></code></pre>
+    <div class="caja azul">
+      <h3>Cómo se lee, en tres pasadas</h3>
+      <ul>
+        <li><code>faltan_%</code> de mayor a menor: lo que pase del <strong>40 %</strong> es candidato a descartarse.</li>
+        <li><code>distintos</code>: el <strong>1</strong> es una columna constante —sirve para nada—; el que iguala las filas es un identificador.</li>
+        <li><strong>media contra mediana</strong>: si se separan mucho, la columna está sesgada y el promedio miente.</li>
+      </ul>
+    </div>
+    <p class="tenue">Es lo primero que se le corre a cualquier archivo nuevo, hoy y en diciembre.</p>
+  </div>
+</section>
+
+<!-- 11 -->
+<section class="slide" data-in="In [11]:">
+  <p class="kicker">Ahora ustedes · 20 minutos</p>
+  <h2>El perfilado de sus cuatro candidatos</h2>
+  <div class="rule"></div>
+  <div class="slide-body">
+    <p class="lead">Por grupo: corran <code>perfilar()</code> sobre cada candidato y escriban
+       <em>tres problemas</em> de cada uno.</p>
+    <div class="cols">
+      <div class="caja verde">
+        <h3>Lo que hay que poder responder cuando pase por su mesa</h3>
+        <ul>
+          <li>¿Cuál es la columna objetivo y cómo se reparte?</li>
+          <li>¿Qué columna tiene más faltantes y a quién le faltan?</li>
+          <li>¿Hay valores imposibles? ¿cuáles?</li>
+        </ul>
+      </div>
+      <div class="caja rojo">
+        <h3>El que se cae aquí, se cae</h3>
+        <p>Un candidato sin objetivo claro, o con la clase minoritaria por debajo del <strong>10 %</strong>,
+        o <strong>ya limpio</strong>, no aguanta el semestre. <em>Mejor descubrirlo hoy que en octubre.</em></p>
+      </div>
+    </div>
+    <p class="tenue">Esto es literalmente la mitad de la propuesta que se entrega <strong>el sábado</strong>.</p>
+  </div>
+</section>
+
+<!-- 12 -->
+<section class="slide" data-in="In [12]:">
+  <p class="kicker">Cierre</p>
+  <h2>Seis ideas de hoy</h2>
+  <div class="rule"></div>
+  <div class="slide-body">
+    <ul>
+      <li><code>describe()</code> se lee <strong>buscando lo imposible</strong>, no confirmando.</li>
+      <li><code>isna()</code> solo ve lo que pandas reconoció: <strong>99 y 9 eran faltantes</strong>.</li>
+      <li>Un faltante importa por <strong>quién</strong> lo tiene, no por cuántos son.</li>
+      <li>Un atípico se elimina cuando es <strong>falso</strong>, no cuando es grande.</li>
+      <li><code>nunique()</code> separa identificador, categórica y continua en un segundo.</li>
+      <li>La fase 2 termina en <strong>una lista escrita</strong> de qué arreglar.</li>
+    </ul>
+    <div class="caja rojo">
+      <p><strong>Sábado 22, 8:00 — Sala 601.</strong> Se entrega la <em>propuesta de datasets: los
+      cuatro candidatos</em>, y la revisamos en clase grupo por grupo. Además: visualización —los
+      mismos datos, ahora dibujados—.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 13 -->
+<section class="slide cover" data-in="Out[12]:">
+  <div class="slide-body">
+    <h1>¿Preguntas?</h1>
+    <div class="rule"></div>
+    <p class="meta">
+      Minería de Datos · 26160 · grupo 020‑81<br>
+      Jhon Alejandro Varón Robayo<br>
+      <b>Propuesta de datasets — sábado 22 de agosto</b><br>
+      Taller de la semana — domingo 30, 11:59 p. m.
+    </p>
+  </div>
+</section>
+
+</main>
+
+
+
+<div class="bar" role="toolbar" aria-label="Navegación">
+  <button id="prev" type="button" aria-label="Diapositiva anterior">←</button>
+  <button id="next" type="button" aria-label="Diapositiva siguiente">→</button>
+  <button id="menos" type="button" aria-label="Reducir tamaño de letra">A−</button>
+  <button id="mas" type="button" aria-label="Aumentar tamaño de letra">A+</button>
+  <span class="zoom" id="zoom">100 %</span>
+  <span class="track"><span class="fill" id="fill"></span></span>
+  <span class="counter" id="counter">[1] / 13</span>
+  <span class="hint">← → avanzar · + − tamaño · F pantalla completa · Ctrl+P imprimir</span>
+</div>
+
+<script>
+(function () {
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var fill = document.getElementById('fill');
+  var counter = document.getElementById('counter');
+  var zoom = document.getElementById('zoom');
+  var i = 0;
+
+  /* ---- escala tipográfica, persistente entre sesiones ---- */
+  var esc = parseFloat(localStorage.getItem('md-esc')) || 1;
+
+  function aplicarEsc() {
+    esc = Math.max(0.7, Math.min(1.8, esc));
+    document.documentElement.style.setProperty('--esc', esc);
+    zoom.textContent = Math.round(esc * 100) + ' %';
+    try { localStorage.setItem('md-esc', esc); } catch (e) {}
+  }
+
+  function show(n) {
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach(function (s, k) { s.classList.toggle('is-live', k === i); });
+    fill.style.width = ((i + 1) / slides.length * 100) + '%';
+    counter.textContent = '[' + (i + 1) + '] / ' + slides.length;
+    if (history.replaceState) history.replaceState(null, '', '#' + (i + 1));
+  }
+
+  document.getElementById('next').addEventListener('click', function () { show(i + 1); });
+  document.getElementById('prev').addEventListener('click', function () { show(i - 1); });
+  document.getElementById('mas').addEventListener('click', function () { esc += 0.1; aplicarEsc(); });
+  document.getElementById('menos').addEventListener('click', function () { esc -= 0.1; aplicarEsc(); });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); show(i + 1); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); show(i - 1); }
+    else if (e.key === 'Home') { e.preventDefault(); show(0); }
+    else if (e.key === 'End') { e.preventDefault(); show(slides.length - 1); }
+    else if (e.key === '+' || e.key === '=') { e.preventDefault(); esc += 0.1; aplicarEsc(); }
+    else if (e.key === '-' || e.key === '_') { e.preventDefault(); esc -= 0.1; aplicarEsc(); }
+    else if (e.key === '0') { e.preventDefault(); esc = 1; aplicarEsc(); }
+    else if (e.key === 'f' || e.key === 'F') {
+      if (!document.fullscreenElement) { document.documentElement.requestFullscreen(); }
+      else { document.exitFullscreen(); }
+    }
+  });
+
+  /* ---- el revelado de la fuga de información (lámina 14) ---- */
+  Array.prototype.forEach.call(document.querySelectorAll('[data-reveal] .rv-btn'), function (b) {
+    b.addEventListener('click', function () {
+      b.closest('[data-reveal]').classList.add('mostrado');
+    });
+  });
+
+  aplicarEsc();
+  var inicio = parseInt((location.hash || '').replace('#', ''), 10);
+  show(isNaN(inicio) ? 0 : inicio - 1);
+})();
+</script>
+
+</body>
+</html>

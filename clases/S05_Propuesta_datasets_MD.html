@@ -1,0 +1,753 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Propuesta de datasets · Minería de Datos 2026-3</title>
+<style>
+:root{
+  --papel:#FBF9F4; --papel2:#F2EEE5; --tinta:#1C1814; --texto:#2E2820;
+  --tenue:#6E6558; --linea:#DDD5C7; --linea2:#C6BCA9;
+  --pk:#A96D14; --fk:#1E7F63; --alerta:#B0442F;
+  --mono:"Cascadia Mono",Consolas,"SF Mono",Menlo,"DejaVu Sans Mono",monospace;
+  --sans:"Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root{--papel:#14120F;--papel2:#211D18;--tinta:#F7F4EE;--texto:#E9E3D7;
+    --tenue:#9C9182;--linea:#3A3229;--linea2:#4A4036;
+    --pk:#E0A33C;--fk:#5FBFA0;--alerta:#D9705E}
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--papel);color:var(--texto);font-family:var(--sans);
+  font-size:16.5px;line-height:1.62;padding:2.4rem 1.2rem 5rem}
+.doc{max-width:58rem;margin:0 auto}
+header.doc-head{border-bottom:2px solid var(--linea2);padding-bottom:1.1rem;margin-bottom:1.8rem}
+.eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--pk);margin:0 0 .5rem}
+h1{font-size:clamp(1.7rem,4vw,2.4rem);line-height:1.14;margin:0 0 .5rem;color:var(--tinta);letter-spacing:-.018em}
+.meta{display:flex;flex-wrap:wrap;gap:.4rem 1.4rem;font-size:.92rem;color:var(--tenue);margin-top:.5rem}
+.meta b{color:var(--texto);font-weight:600}
+h2{font-size:1.3rem;margin:2.4rem 0 .6rem;color:var(--tinta);letter-spacing:-.012em;
+  padding-bottom:.32rem;border-bottom:1px solid var(--linea)}
+h3{font-size:1.05rem;margin:1.5rem 0 .4rem;color:var(--tinta)}
+p{margin:.6rem 0} ul,ol{margin:.6rem 0;padding-left:1.35rem} li{margin:.34rem 0}
+li::marker{color:var(--fk)}
+strong,b{color:var(--tinta);font-weight:650} em{font-style:italic}
+code{font-family:var(--mono);font-size:.9em;background:var(--papel2);
+  border:1px solid var(--linea);padding:.06em .34em;border-radius:4px;color:var(--fk)}
+pre{background:var(--papel2);border:1px solid var(--linea);border-left:3px solid var(--fk);
+  border-radius:0 7px 7px 0;padding:.85rem 1rem;overflow-x:auto;font-family:var(--mono);
+  font-size:.82rem;line-height:1.55;margin:.7rem 0}
+pre code{background:none;border:none;padding:0;color:var(--texto)}
+.tabla{overflow-x:auto;margin:.9rem 0}
+table{border-collapse:collapse;width:100%;font-size:.94rem}
+th,td{padding:.5rem .7rem;text-align:left;border-bottom:1px solid var(--linea);vertical-align:top}
+thead th{font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--tenue);font-weight:600;border-bottom:2px solid var(--linea2);white-space:nowrap}
+tbody tr:hover{background:var(--papel2)}
+td.min,th.min{font-family:var(--mono);text-align:right;white-space:nowrap;color:var(--pk);font-size:.88rem}
+.nota,.aviso,.ok{padding:.85rem 1.1rem;margin:1.1rem 0;border-radius:0 7px 7px 0;font-size:.97rem}
+.nota{border-left:3px solid var(--linea2);background:var(--papel2)}
+.aviso{border-left:3px solid var(--alerta);background:color-mix(in srgb,var(--alerta) 8%,var(--papel))}
+.ok{border-left:3px solid var(--fk);background:color-mix(in srgb,var(--fk) 8%,var(--papel))}
+.aviso b{color:var(--alerta)} .ok b{color:var(--fk)}
+.nota p:first-child,.aviso p:first-child,.ok p:first-child{margin-top:0}
+.nota p:last-child,.aviso p:last-child,.ok p:last-child{margin-bottom:0}
+.pill{display:inline-block;font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;
+  text-transform:uppercase;padding:.16em .6em;border-radius:20px;
+  border:1px solid var(--linea2);color:var(--tenue);vertical-align:.08em}
+.pill.pk{color:var(--pk);border-color:var(--pk)} .pill.fk{color:var(--fk);border-color:var(--fk)}
+.pill.al{color:var(--alerta);border-color:var(--alerta)}
+.cand{border:2px solid var(--linea2);border-radius:10px;margin:1.6rem 0;overflow:hidden}
+.cand > h3{margin:0;padding:.7rem 1rem;background:var(--papel2);border-bottom:1px solid var(--linea);
+  font-size:1.06rem;display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;align-items:baseline}
+.cand > h3 .t{font-family:var(--mono);font-size:.74rem;color:var(--pk);font-weight:400}
+.cand .cuerpo{padding:.2rem 1rem 1rem}
+.preg{border:1px solid var(--linea);border-radius:8px;padding:.9rem 1.05rem;margin:.9rem 0;background:var(--papel)}
+.preg > .n{font-family:var(--mono);font-size:.72rem;letter-spacing:.14em;color:var(--pk);
+  text-transform:uppercase;display:block;margin-bottom:.25rem}
+.preg > .q{font-weight:650;color:var(--tinta);display:block;margin-bottom:.2rem;font-size:1rem}
+.preg > .hint{font-size:.87rem;color:var(--tenue);margin:.1rem 0 .5rem}
+input[type=text],textarea{width:100%;font-family:inherit;font-size:.96rem;color:var(--texto);
+  background:var(--papel2);border:1px solid var(--linea2);border-radius:6px;padding:.45rem .6rem;margin-top:.35rem}
+textarea{min-height:4.6rem;resize:vertical;line-height:1.5}
+textarea.alta{min-height:8rem} textarea.mono{font-family:var(--mono);font-size:.85rem}
+input[type=text]:focus,textarea:focus{outline:2px solid var(--fk);outline-offset:1px}
+.rej{display:grid;grid-template-columns:repeat(auto-fit,minmax(9.5rem,1fr));gap:.7rem;margin-top:.4rem}
+.rej label{font-size:.78rem;color:var(--tenue);font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em}
+.opts{display:flex;flex-direction:column;gap:.25rem;margin-top:.45rem}
+.opts label{display:flex;gap:.5rem;align-items:flex-start;cursor:pointer;padding:.28rem .45rem;border-radius:5px;font-size:.95rem}
+.opts label:hover{background:var(--papel2)}
+.opts input{margin-top:.32rem;accent-color:var(--fk);flex-shrink:0}
+.acciones{position:sticky;bottom:0;background:var(--papel);border-top:1px solid var(--linea2);
+  padding:.9rem 0;margin-top:2rem;display:flex;gap:.7rem;align-items:center;flex-wrap:wrap}
+button{font-family:var(--mono);font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;
+  background:var(--fk);border:1px solid var(--fk);color:var(--papel);padding:.6em 1.3em;border-radius:22px;cursor:pointer}
+button.sec{background:transparent;color:var(--fk)}
+button:hover{filter:brightness(1.12)}
+#estado{font-size:.9rem;color:var(--tenue)}
+#salida{width:100%;min-height:14rem;font-family:var(--mono);font-size:.8rem;line-height:1.5;margin-top:.8rem;display:none}
+#salida.visible{display:block}
+footer.doc-foot{margin-top:3rem;padding-top:1rem;border-top:1px solid var(--linea);font-size:.84rem;color:var(--tenue)}
+@media (max-width:640px){body{font-size:15.5px;padding:1.4rem .9rem 3rem}table{font-size:.86rem}}
+@media print{
+  body{background:#fff;color:#111;font-size:10pt;padding:0}
+  .doc{max-width:none} h1,h2,h3,b,strong,.preg > .q{color:#000}
+  .preg,table,.nota,.aviso,.ok,pre,.cand{page-break-inside:avoid;break-inside:avoid}
+  .acciones,#salida,button{display:none}
+  textarea{min-height:3.4rem;background:#fff;border:1px solid #999}
+  input[type=text]{background:#fff;border:none;border-bottom:1px solid #999;border-radius:0}
+  .nota{background:#F4F2EE;border-left:3px solid #888}
+  .aviso{background:#FBEEEB;border-left:3px solid #A33}
+  .ok{background:#EAF6F1;border-left:3px solid #2A7}
+  code{background:#F0EEE9;border:1px solid #CCC;color:#111} .tabla{overflow:visible}
+}
+</style>
+</head>
+<body>
+<main class="doc">
+
+<header class="doc-head">
+  <p class="eyebrow">Semana 3 · Proyecto · requisito sin nota</p>
+  <h1>Propuesta de datasets — tres candidatos</h1>
+  <div class="meta">
+    <span><b>Minería de Datos</b> · 26160 · grupo 020-81</span>
+    <span><b>Cierra hoy</b>, sábado 22 de agosto, al terminar la sesión</span>
+    <span>Una entrega por grupo · Moodle</span>
+  </div>
+</header>
+
+<div class="ok">
+  <p><b>Esto no es una tarea nueva: es lo que ya hicieron, ordenado.</b> Cada casilla se llena con la
+  salida de una función que ya corrieron en clase — <code>perfilar()</code> y
+  <code>atipicos_iqr()</code> del jueves, <code>unir()</code> del sábado pasado. Si el candidato es
+  bueno, llenar esto toma diez minutos por dataset.</p>
+</div>
+
+<div class="aviso">
+  <p><b>Y si no se puede llenar, ese candidato ya le está diciendo algo.</b> Una casilla que queda
+  vacía porque «no supe qué poner» casi siempre significa que el archivo no sirve: no tiene objetivo,
+  no tiene diccionario, o no hay nada que integrar.</p>
+</div>
+
+<h2>Antes de llenar: corra esto sobre cada candidato</h2>
+<p>Las tres funciones son las de clase. Péguelas en un notebook nuevo y aplíquelas a los tres archivos.</p>
+
+<pre><code>import pandas as pd
+
+df = pd.read_csv("candidato_1.csv")          # ojo con sep y encoding
+
+# ── 1. Los numeros ────────────────────────────────────────────
+print(df.shape)
+print(df.dtypes.value_counts())
+
+# ── 2. El perfilado (sesion 4) ────────────────────────────────
+perfilar(df)                                  # tipo, distintos, faltan_%, moda, min/mediana/media/max
+print("duplicados:", df.duplicated().sum())
+print("faltantes totales: {:.1%}".format(df.isna().mean().mean()))
+print(df.isna().mean().sort_values(ascending=False).head(5) * 100)
+
+# ── 3. El objetivo ────────────────────────────────────────────
+OBJ = "mi_columna_objetivo"
+print(df[OBJ].value_counts(normalize=True) * 100)     # si es categorica
+# print(df[OBJ].describe())                           # si es continua
+
+# ── 4. Atipicos: error o hallazgo (sesion 4) ──────────────────
+for col in ["columna_a", "columna_b"]:
+    n_at, bajo, alto = atipicos_iqr(df[col])
+    print(f"{col:22s} atipicos={n_at:5d}   rango normal=[{bajo}, {alto}]")
+
+# ── 5. La integracion (sesion 3) ──────────────────────────────
+otra = pd.read_csv("segunda_fuente.csv")
+integrado = unir(df, otra, "llave", nombre="+ segunda fuente")   # cuenta filas antes y despues
+</code></pre>
+
+<div class="nota">
+  <p><b>Si no tiene <code>perfilar</code>, <code>atipicos_iqr</code> o <code>unir</code> a mano</b>,
+  están en los notebooks de las sesiones 3 y 4, en Moodle. No las reescriba: úselas tal cual, que es
+  el punto de haberlas construido.</p>
+</div>
+
+<h2>Los tres candidatos</h2>
+<p>En <b>orden de preferencia</b>: el candidato 1 es el que de verdad quieren. Se revisa en ese orden
+y se para en el primero que cumple, así que el orden importa.</p>
+
+<div class="aviso">
+  <p><b>Los tres tienen que ser distintos de verdad</b> —no tres recortes del mismo archivo ni el
+  mismo indicador en tres años— y <b>no pueden salir los tres de Kaggle</b>: al menos dos fuentes
+  distintas y al menos una institucional.</p>
+</div>
+
+<div class="preg">
+  <span class="n">Portada</span>
+  <span class="q">Quiénes son.</span>
+  <div class="rej">
+    <div><label for="g_num">Grupo</label><input type="text" id="g_num" placeholder="Grupo 3"></div>
+    <div><label for="g_resp">Responsable de entregas</label><input type="text" id="g_resp" placeholder="Nombre Apellido"></div>
+  </div>
+  <p class="hint" style="margin-top:.5rem">Integrantes, uno por línea, con código:</p>
+  <textarea id="g_int" placeholder="Nombre Apellido — 20241020000"></textarea>
+  <p class="hint" style="margin-top:.5rem"><b>Declaración de cruce.</b> ¿Quién del grupo está también
+    en Estadística Multidimensional, y qué datasets propuso allá? Si nadie está, escriba «ninguno».</p>
+  <textarea id="g_cruce"></textarea>
+</div>
+
+
+<div class="cand">
+  <h3><span>Candidato 1</span><span class="t">preferencia n.º 1</span></h3>
+  <div class="cuerpo">
+
+    <div class="preg">
+      <span class="n">1.1 · Identificación</span>
+      <span class="q">Qué es y de dónde salió.</span>
+      <div class="rej">
+        <div><label for="c1_nombre">Nombre del conjunto</label><input type="text" id="c1_nombre" placeholder="Deserción SPADIES 2020-2024"></div>
+        <div><label for="c1_entidad">Entidad que lo publica</label><input type="text" id="c1_entidad" placeholder="MEN · SPADIES"></div>
+      </div>
+      <p class="hint" style="margin-top:.5rem">URL exacta. <b>Si el enlace no abre, el candidato no existe.</b></p>
+      <input type="text" id="c1_url" placeholder="https://...">
+      <p class="hint" style="margin-top:.5rem">Diccionario de variables — enlace o nombre del archivo adjunto.
+        <b>Sin diccionario no hay candidato.</b></p>
+      <input type="text" id="c1_dicc" placeholder="diccionario_spadies.pdf">
+    </div>
+
+    <div class="preg">
+      <span class="n">1.2 · Los números</span>
+      <span class="q">La salida de <code>df.shape</code> y del conteo de tipos.</span>
+      <p class="hint">Requisitos 1 y 2: n ≥ 1.000 · p ≥ 10 columnas, con ≥ 6 numéricas y ≥ 2 categóricas.</p>
+      <div class="rej">
+        <div><label for="c1_n">n (filas)</label><input type="text" id="c1_n" placeholder="18420"></div>
+        <div><label for="c1_p">columnas</label><input type="text" id="c1_p" placeholder="23"></div>
+        <div><label for="c1_num">numéricas</label><input type="text" id="c1_num" placeholder="11"></div>
+        <div><label for="c1_cat">categóricas</label><input type="text" id="c1_cat" placeholder="9"></div>
+        <div><label for="c1_id">identificadores</label><input type="text" id="c1_id" placeholder="3"></div>
+      </div>
+      <p class="hint" style="margin-top:.5rem">Los identificadores no cuentan como variables:
+        descuéntelos antes de decir si cumple.</p>
+    </div>
+
+    <div class="preg">
+      <span class="n">1.3 · La variable objetivo</span>
+      <span class="q">Cuál es, de qué tipo, y cómo se reparte.</span>
+      <p class="hint">Requisitos 3 y 4. Si es categórica, pegue el <code>value_counts(normalize=True)</code>;
+        si es continua, el <code>describe()</code>.</p>
+      <div class="rej">
+        <div><label for="c1_obj">Columna objetivo</label><input type="text" id="c1_obj" placeholder="estado_estudiante"></div>
+        <div><label for="c1_objtipo">Tipo</label><input type="text" id="c1_objtipo" placeholder="categórica · 2 clases"></div>
+        <div><label for="c1_minor">Clase minoritaria (%)</label><input type="text" id="c1_minor" placeholder="18.4"></div>
+      </div>
+      <p class="hint" style="margin-top:.5rem">Pegue la salida:</p>
+      <textarea id="c1_objsal" class="mono"></textarea>
+    </div>
+
+    <div class="preg">
+      <span class="n">1.4 · El perfilado — lo del jueves</span>
+      <span class="q">Corra <code>perfilar(df)</code> y reporte lo que salió.</span>
+      <p class="hint">Requisito 5: <b>aquí un dataset limpio es un problema, no una ventaja.</b>
+        Si duplicados = 0 y faltantes = 0,0 %, no cumple.</p>
+      <div class="rej">
+        <div><label for="c1_dup">Filas duplicadas</label><input type="text" id="c1_dup" placeholder="312"></div>
+        <div><label for="c1_falt">% de celdas faltantes</label><input type="text" id="c1_falt" placeholder="4.7"></div>
+        <div><label for="c1_peor">Columna con más faltantes</label><input type="text" id="c1_peor" placeholder="ingreso_familiar · 22,1 %"></div>
+        <div><label for="c1_const">Columnas casi constantes</label><input type="text" id="c1_const" placeholder="2"></div>
+      </div>
+      <p class="hint" style="margin-top:.5rem"><b>¿De quién faltan?</b> No basta con cuántos: el jueves
+        vimos que los faltantes casi nunca están repartidos al azar. ¿Se concentran en algún grupo?</p>
+      <textarea id="c1_dequien"></textarea>
+    </div>
+
+    <div class="preg">
+      <span class="n">1.5 · Atípicos: ¿error o hallazgo?</span>
+      <span class="q">Corra <code>atipicos_iqr()</code> sobre dos numéricas y decida qué son.</span>
+      <p class="hint">Es la distinción del §7 del jueves, y es la que se califica: un −99 es un error,
+        un ingreso de 40 millones puede ser el hallazgo.</p>
+      <div class="rej">
+        <div><label for="c1_at1">Columna 1 · atípicos</label><input type="text" id="c1_at1" placeholder="ingreso · 431"></div>
+        <div><label for="c1_at2">Columna 2 · atípicos</label><input type="text" id="c1_at2" placeholder="edad · 87"></div>
+      </div>
+      <p class="hint" style="margin-top:.5rem">¿Cuáles son error y cuáles son hallazgo? Una frase por cada una.</p>
+      <textarea id="c1_aterr"></textarea>
+    </div>
+
+    <div class="preg">
+      <span class="n">1.6 · Integración — lo del sábado pasado</span>
+      <span class="q">¿Cuáles son las dos fuentes y cuál es la llave que las une?</span>
+      <p class="hint">Requisito 6. Use la función <code>unir()</code>: <b>cuente las filas antes y después.</b>
+        Si cambiaron, explique por qué.</p>
+      <div class="rej">
+        <div><label for="c1_f1">Fuente A</label><input type="text" id="c1_f1" placeholder="matriculas.csv"></div>
+        <div><label for="c1_f2">Fuente B</label><input type="text" id="c1_f2" placeholder="API municipios"></div>
+        <div><label for="c1_llave">Llave</label><input type="text" id="c1_llave" placeholder="cod_municipio"></div>
+        <div><label for="c1_tipos">¿Mismo tipo en las dos?</label><input type="text" id="c1_tipos" placeholder="sí · int64"></div>
+      </div>
+      <p class="hint" style="margin-top:.5rem">Filas antes → después del <code>merge</code>, y qué pasó:</p>
+      <textarea id="c1_merge" class="mono"></textarea>
+    </div>
+
+    <div class="preg">
+      <span class="n">1.7 · La pregunta de negocio</span>
+      <span class="q">Una frase, y qué decisión cambiaría si el modelo funciona.</span>
+      <p class="hint"><em>«Analizar la deserción»</em> no es una pregunta.
+        <em>«¿Se puede identificar en el primer semestre a quién citar a tutoría?»</em> sí lo es.</p>
+      <textarea id="c1_preg"></textarea>
+    </div>
+
+    <div class="preg">
+      <span class="n">1.8 · Qué habría que limpiar</span>
+      <span class="q">Dos o tres líneas, a partir de todo lo anterior.</span>
+      <p class="hint">Si la respuesta es «nada», vuelva al requisito 5: este candidato no sirve.</p>
+      <textarea id="c1_limpiar"></textarea>
+    </div>
+
+  </div>
+</div>
+
+
+<div class="cand">
+  <h3><span>Candidato 2</span><span class="t">preferencia n.º 2</span></h3>
+  <div class="cuerpo">
+
+    <div class="preg">
+      <span class="n">2.1 · Identificación</span>
+      <span class="q">Qué es y de dónde salió.</span>
+      <div class="rej">
+        <div><label for="c2_nombre">Nombre del conjunto</label><input type="text" id="c2_nombre" placeholder="Deserción SPADIES 2020-2024"></div>
+        <div><label for="c2_entidad">Entidad que lo publica</label><input type="text" id="c2_entidad" placeholder="MEN · SPADIES"></div>
+      </div>
+      <p class="hint" style="margin-top:.5rem">URL exacta. <b>Si el enlace no abre, el candidato no existe.</b></p>
+      <input type="text" id="c2_url" placeholder="https://...">
+      <p class="hint" style="margin-top:.5rem">Diccionario de variables — enlace o nombre del archivo adjunto.
+        <b>Sin diccionario no hay candidato.</b></p>
+      <input type="text" id="c2_dicc" placeholder="diccionario_spadies.pdf">
+    </div>
+
+    <div class="preg">
+      <span class="n">2.2 · Los números</span>
+      <span class="q">La salida de <code>df.shape</code> y del conteo de tipos.</span>
+      <p class="hint">Requisitos 1 y 2: n ≥ 1.000 · p ≥ 10 columnas, con ≥ 6 numéricas y ≥ 2 categóricas.</p>
+      <div class="rej">
+        <div><label for="c2_n">n (filas)</label><input type="text" id="c2_n" placeholder="18420"></div>
+        <div><label for="c2_p">columnas</label><input type="text" id="c2_p" placeholder="23"></div>
+        <div><label for="c2_num">numéricas</label><input type="text" id="c2_num" placeholder="11"></div>
+        <div><label for="c2_cat">categóricas</label><input type="text" id="c2_cat" placeholder="9"></div>
+        <div><label for="c2_id">identificadores</label><input type="text" id="c2_id" placeholder="3"></div>
+      </div>
+      <p class="hint" style="margin-top:.5rem">Los identificadores no cuentan como variables:
+        descuéntelos antes de decir si cumple.</p>
+    </div>
+
+    <div class="preg">
+      <span class="n">2.3 · La variable objetivo</span>
+      <span class="q">Cuál es, de qué tipo, y cómo se reparte.</span>
+      <p class="hint">Requisitos 3 y 4. Si es categórica, pegue el <code>value_counts(normalize=True)</code>;
+        si es continua, el <code>describe()</code>.</p>
+      <div class="rej">
+        <div><label for="c2_obj">Columna objetivo</label><input type="text" id="c2_obj" placeholder="estado_estudiante"></div>
+        <div><label for="c2_objtipo">Tipo</label><input type="text" id="c2_objtipo" placeholder="categórica · 2 clases"></div>
+        <div><label for="c2_minor">Clase minoritaria (%)</label><input type="text" id="c2_minor" placeholder="18.4"></div>
+      </div>
+      <p class="hint" style="margin-top:.5rem">Pegue la salida:</p>
+      <textarea id="c2_objsal" class="mono"></textarea>
+    </div>
+
+    <div class="preg">
+      <span class="n">2.4 · El perfilado — lo del jueves</span>
+      <span class="q">Corra <code>perfilar(df)</code> y reporte lo que salió.</span>
+      <p class="hint">Requisito 5: <b>aquí un dataset limpio es un problema, no una ventaja.</b>
+        Si duplicados = 0 y faltantes = 0,0 %, no cumple.</p>
+      <div class="rej">
+        <div><label for="c2_dup">Filas duplicadas</label><input type="text" id="c2_dup" placeholder="312"></div>
+        <div><label for="c2_falt">% de celdas faltantes</label><input type="text" id="c2_falt" placeholder="4.7"></div>
+        <div><label for="c2_peor">Columna con más faltantes</label><input type="text" id="c2_peor" placeholder="ingreso_familiar · 22,1 %"></div>
+        <div><label for="c2_const">Columnas casi constantes</label><input type="text" id="c2_const" placeholder="2"></div>
+      </div>
+      <p class="hint" style="margin-top:.5rem"><b>¿De quién faltan?</b> No basta con cuántos: el jueves
+        vimos que los faltantes casi nunca están repartidos al azar. ¿Se concentran en algún grupo?</p>
+      <textarea id="c2_dequien"></textarea>
+    </div>
+
+    <div class="preg">
+      <span class="n">2.5 · Atípicos: ¿error o hallazgo?</span>
+      <span class="q">Corra <code>atipicos_iqr()</code> sobre dos numéricas y decida qué son.</span>
+      <p class="hint">Es la distinción del §7 del jueves, y es la que se califica: un −99 es un error,
+        un ingreso de 40 millones puede ser el hallazgo.</p>
+      <div class="rej">
+        <div><label for="c2_at1">Columna 1 · atípicos</label><input type="text" id="c2_at1" placeholder="ingreso · 431"></div>
+        <div><label for="c2_at2">Columna 2 · atípicos</label><input type="text" id="c2_at2" placeholder="edad · 87"></div>
+      </div>
+      <p class="hint" style="margin-top:.5rem">¿Cuáles son error y cuáles son hallazgo? Una frase por cada una.</p>
+      <textarea id="c2_aterr"></textarea>
+    </div>
+
+    <div class="preg">
+      <span class="n">2.6 · Integración — lo del sábado pasado</span>
+      <span class="q">¿Cuáles son las dos fuentes y cuál es la llave que las une?</span>
+      <p class="hint">Requisito 6. Use la función <code>unir()</code>: <b>cuente las filas antes y después.</b>
+        Si cambiaron, explique por qué.</p>
+      <div class="rej">
+        <div><label for="c2_f1">Fuente A</label><input type="text" id="c2_f1" placeholder="matriculas.csv"></div>
+        <div><label for="c2_f2">Fuente B</label><input type="text" id="c2_f2" placeholder="API municipios"></div>
+        <div><label for="c2_llave">Llave</label><input type="text" id="c2_llave" placeholder="cod_municipio"></div>
+        <div><label for="c2_tipos">¿Mismo tipo en las dos?</label><input type="text" id="c2_tipos" placeholder="sí · int64"></div>
+      </div>
+      <p class="hint" style="margin-top:.5rem">Filas antes → después del <code>merge</code>, y qué pasó:</p>
+      <textarea id="c2_merge" class="mono"></textarea>
+    </div>
+
+    <div class="preg">
+      <span class="n">2.7 · La pregunta de negocio</span>
+      <span class="q">Una frase, y qué decisión cambiaría si el modelo funciona.</span>
+      <p class="hint"><em>«Analizar la deserción»</em> no es una pregunta.
+        <em>«¿Se puede identificar en el primer semestre a quién citar a tutoría?»</em> sí lo es.</p>
+      <textarea id="c2_preg"></textarea>
+    </div>
+
+    <div class="preg">
+      <span class="n">2.8 · Qué habría que limpiar</span>
+      <span class="q">Dos o tres líneas, a partir de todo lo anterior.</span>
+      <p class="hint">Si la respuesta es «nada», vuelva al requisito 5: este candidato no sirve.</p>
+      <textarea id="c2_limpiar"></textarea>
+    </div>
+
+  </div>
+</div>
+
+
+<div class="cand">
+  <h3><span>Candidato 3</span><span class="t">preferencia n.º 3</span></h3>
+  <div class="cuerpo">
+
+    <div class="preg">
+      <span class="n">3.1 · Identificación</span>
+      <span class="q">Qué es y de dónde salió.</span>
+      <div class="rej">
+        <div><label for="c3_nombre">Nombre del conjunto</label><input type="text" id="c3_nombre" placeholder="Deserción SPADIES 2020-2024"></div>
+        <div><label for="c3_entidad">Entidad que lo publica</label><input type="text" id="c3_entidad" placeholder="MEN · SPADIES"></div>
+      </div>
+      <p class="hint" style="margin-top:.5rem">URL exacta. <b>Si el enlace no abre, el candidato no existe.</b></p>
+      <input type="text" id="c3_url" placeholder="https://...">
+      <p class="hint" style="margin-top:.5rem">Diccionario de variables — enlace o nombre del archivo adjunto.
+        <b>Sin diccionario no hay candidato.</b></p>
+      <input type="text" id="c3_dicc" placeholder="diccionario_spadies.pdf">
+    </div>
+
+    <div class="preg">
+      <span class="n">3.2 · Los números</span>
+      <span class="q">La salida de <code>df.shape</code> y del conteo de tipos.</span>
+      <p class="hint">Requisitos 1 y 2: n ≥ 1.000 · p ≥ 10 columnas, con ≥ 6 numéricas y ≥ 2 categóricas.</p>
+      <div class="rej">
+        <div><label for="c3_n">n (filas)</label><input type="text" id="c3_n" placeholder="18420"></div>
+        <div><label for="c3_p">columnas</label><input type="text" id="c3_p" placeholder="23"></div>
+        <div><label for="c3_num">numéricas</label><input type="text" id="c3_num" placeholder="11"></div>
+        <div><label for="c3_cat">categóricas</label><input type="text" id="c3_cat" placeholder="9"></div>
+        <div><label for="c3_id">identificadores</label><input type="text" id="c3_id" placeholder="3"></div>
+      </div>
+      <p class="hint" style="margin-top:.5rem">Los identificadores no cuentan como variables:
+        descuéntelos antes de decir si cumple.</p>
+    </div>
+
+    <div class="preg">
+      <span class="n">3.3 · La variable objetivo</span>
+      <span class="q">Cuál es, de qué tipo, y cómo se reparte.</span>
+      <p class="hint">Requisitos 3 y 4. Si es categórica, pegue el <code>value_counts(normalize=True)</code>;
+        si es continua, el <code>describe()</code>.</p>
+      <div class="rej">
+        <div><label for="c3_obj">Columna objetivo</label><input type="text" id="c3_obj" placeholder="estado_estudiante"></div>
+        <div><label for="c3_objtipo">Tipo</label><input type="text" id="c3_objtipo" placeholder="categórica · 2 clases"></div>
+        <div><label for="c3_minor">Clase minoritaria (%)</label><input type="text" id="c3_minor" placeholder="18.4"></div>
+      </div>
+      <p class="hint" style="margin-top:.5rem">Pegue la salida:</p>
+      <textarea id="c3_objsal" class="mono"></textarea>
+    </div>
+
+    <div class="preg">
+      <span class="n">3.4 · El perfilado — lo del jueves</span>
+      <span class="q">Corra <code>perfilar(df)</code> y reporte lo que salió.</span>
+      <p class="hint">Requisito 5: <b>aquí un dataset limpio es un problema, no una ventaja.</b>
+        Si duplicados = 0 y faltantes = 0,0 %, no cumple.</p>
+      <div class="rej">
+        <div><label for="c3_dup">Filas duplicadas</label><input type="text" id="c3_dup" placeholder="312"></div>
+        <div><label for="c3_falt">% de celdas faltantes</label><input type="text" id="c3_falt" placeholder="4.7"></div>
+        <div><label for="c3_peor">Columna con más faltantes</label><input type="text" id="c3_peor" placeholder="ingreso_familiar · 22,1 %"></div>
+        <div><label for="c3_const">Columnas casi constantes</label><input type="text" id="c3_const" placeholder="2"></div>
+      </div>
+      <p class="hint" style="margin-top:.5rem"><b>¿De quién faltan?</b> No basta con cuántos: el jueves
+        vimos que los faltantes casi nunca están repartidos al azar. ¿Se concentran en algún grupo?</p>
+      <textarea id="c3_dequien"></textarea>
+    </div>
+
+    <div class="preg">
+      <span class="n">3.5 · Atípicos: ¿error o hallazgo?</span>
+      <span class="q">Corra <code>atipicos_iqr()</code> sobre dos numéricas y decida qué son.</span>
+      <p class="hint">Es la distinción del §7 del jueves, y es la que se califica: un −99 es un error,
+        un ingreso de 40 millones puede ser el hallazgo.</p>
+      <div class="rej">
+        <div><label for="c3_at1">Columna 1 · atípicos</label><input type="text" id="c3_at1" placeholder="ingreso · 431"></div>
+        <div><label for="c3_at2">Columna 2 · atípicos</label><input type="text" id="c3_at2" placeholder="edad · 87"></div>
+      </div>
+      <p class="hint" style="margin-top:.5rem">¿Cuáles son error y cuáles son hallazgo? Una frase por cada una.</p>
+      <textarea id="c3_aterr"></textarea>
+    </div>
+
+    <div class="preg">
+      <span class="n">3.6 · Integración — lo del sábado pasado</span>
+      <span class="q">¿Cuáles son las dos fuentes y cuál es la llave que las une?</span>
+      <p class="hint">Requisito 6. Use la función <code>unir()</code>: <b>cuente las filas antes y después.</b>
+        Si cambiaron, explique por qué.</p>
+      <div class="rej">
+        <div><label for="c3_f1">Fuente A</label><input type="text" id="c3_f1" placeholder="matriculas.csv"></div>
+        <div><label for="c3_f2">Fuente B</label><input type="text" id="c3_f2" placeholder="API municipios"></div>
+        <div><label for="c3_llave">Llave</label><input type="text" id="c3_llave" placeholder="cod_municipio"></div>
+        <div><label for="c3_tipos">¿Mismo tipo en las dos?</label><input type="text" id="c3_tipos" placeholder="sí · int64"></div>
+      </div>
+      <p class="hint" style="margin-top:.5rem">Filas antes → después del <code>merge</code>, y qué pasó:</p>
+      <textarea id="c3_merge" class="mono"></textarea>
+    </div>
+
+    <div class="preg">
+      <span class="n">3.7 · La pregunta de negocio</span>
+      <span class="q">Una frase, y qué decisión cambiaría si el modelo funciona.</span>
+      <p class="hint"><em>«Analizar la deserción»</em> no es una pregunta.
+        <em>«¿Se puede identificar en el primer semestre a quién citar a tutoría?»</em> sí lo es.</p>
+      <textarea id="c3_preg"></textarea>
+    </div>
+
+    <div class="preg">
+      <span class="n">3.8 · Qué habría que limpiar</span>
+      <span class="q">Dos o tres líneas, a partir de todo lo anterior.</span>
+      <p class="hint">Si la respuesta es «nada», vuelva al requisito 5: este candidato no sirve.</p>
+      <textarea id="c3_limpiar"></textarea>
+    </div>
+
+  </div>
+</div>
+
+
+<h2>Cierre</h2>
+
+<div class="preg">
+  <span class="n">Cierre 1</span>
+  <span class="q">De los tres, ¿cuál creen que es el mejor y por qué?</span>
+  <p class="hint">No repita los números: diga qué lo hace mejor <b>para el problema que quieren
+    resolver</b>. Es el párrafo que más pesa en la revisión.</p>
+  <textarea id="z_mejor" class="alta"></textarea>
+</div>
+
+<div class="preg">
+  <span class="n">Cierre 2</span>
+  <span class="q">¿Cuál de los tres les da más miedo, y qué es lo que puede salir mal?</span>
+  <p class="hint">Decirlo suma. Ocultarlo y que aparezca en la revisión, resta.</p>
+  <textarea id="z_riesgo"></textarea>
+</div>
+
+<div class="preg">
+  <span class="n">Cierre 3</span>
+  <span class="q">¿Qué tarea de CRISP-DM plantea su caso?</span>
+  <div class="opts">
+    <label><input type="radio" name="tarea" value="Clasificacion"> <b>Clasificación</b> — el objetivo es categórico</label>
+    <label><input type="radio" name="tarea" value="Regresion"> <b>Regresión</b> — el objetivo es numérico continuo</label>
+    <label><input type="radio" name="tarea" value="Agrupamiento"> <b>Agrupamiento</b> — no hay objetivo, se buscan grupos</label>
+  </div>
+  <p class="hint" style="margin-top:.5rem"><b>Una sola.</b> Si dudan entre dos, escojan la que
+    responda la pregunta de negocio que escribieron.</p>
+</div>
+
+<div class="acciones">
+  <button id="btnCopiar">Preparar la propuesta</button>
+  <button class="sec" id="btnLimpiar">Limpiar</button>
+  <span id="estado"></span>
+</div>
+<textarea id="salida" readonly aria-label="Propuesta lista para copiar"></textarea>
+
+<div class="nota">
+  <p><b>Cómo se entrega.</b> Pulse <b>«Preparar la propuesta»</b>, copie el texto y péguelo en la
+  actividad <b>«Propuesta de datasets»</b> de Moodle. <b>Adjunte además los archivos de datos</b>
+  —o el enlace directo de descarga si pesan más de 20 MB— y el notebook con las salidas.
+  Sin datos no se puede verificar nada.</p>
+  <p style="margin-top:.5rem;font-size:.9rem;color:var(--tenue)">Este archivo no envía nada ni guarda
+  nada: si cierra la pestaña sin copiar el texto, se pierde. <code>Ctrl+P</code> lo imprime en blanco.</p>
+</div>
+
+<div class="ok">
+  <p><b>Qué pasa después.</b> Hoy se revisa con semáforo en los últimos minutos de clase; la decisión
+  fina se toma entre hoy y el miércoles, y <b>el dataset de cada grupo se publica el jueves 27</b>.
+  A partir de ahí no se cambia, y arranca la fase de preparación.</p>
+</div>
+
+<footer class="doc-foot">
+  Minería de Datos · 26160 · grupo 020-81 · periodo 2026-3 ·
+  Jhon Alejandro Varón Robayo · Universidad Distrital Francisco José de Caldas<br>
+  Semana 3 · CRISP-DM fase 2 — comprensión de los datos.
+</footer>
+
+</main>
+
+<script>
+(function(){
+  var salida = document.getElementById('salida');
+  var estado = document.getElementById('estado');
+  function val(id){ var e=document.getElementById(id); return e ? e.value.trim() : ''; }
+  function radio(n){ var e=document.querySelector('input[name="'+n+'"]:checked'); return e ? e.value : '—'; }
+  function linea(t){ return t || '—'; }
+  function bloque(t){ return '   ' + linea(t).replace(/\n/g,'\n   '); }
+
+  document.getElementById('btnCopiar').addEventListener('click', function(){
+    var t = [
+      'PROPUESTA DE DATASETS — MINERIA DE DATOS 26160 · 2026-3',
+      'Semana 3 · tres candidatos en orden de preferencia',
+      '',
+      'Grupo: '        + linea(val('g_num')),
+      'Responsable: '  + linea(val('g_resp')),
+      'Integrantes:',
+      bloque(val('g_int')),
+      'Cruce con Estadistica Multidimensional:',
+      bloque(val('g_cruce')),
+      
+      '', '='.repeat(62), 'CANDIDATO 1', '='.repeat(62),
+      'Nombre: '     + linea(val('c1_nombre')),
+      'Entidad: '    + linea(val('c1_entidad')),
+      'URL: '        + linea(val('c1_url')),
+      'Diccionario: '+ linea(val('c1_dicc')),
+      '',
+      'NUMEROS  n=' + linea(val('c1_n')) + '  columnas=' + linea(val('c1_p'))
+        + '  (num ' + linea(val('c1_num')) + ' / cat ' + linea(val('c1_cat'))
+        + ' / ids ' + linea(val('c1_id')) + ')',
+      '',
+      'OBJETIVO: ' + linea(val('c1_obj')) + '  [' + linea(val('c1_objtipo')) + ']'
+        + '  minoritaria=' + linea(val('c1_minor')) + '%',
+      bloque(val('c1_objsal')),
+      '',
+      'PERFILADO  duplicados=' + linea(val('c1_dup'))
+        + '  faltantes=' + linea(val('c1_falt')) + '%'
+        + '  peor columna=' + linea(val('c1_peor'))
+        + '  casi constantes=' + linea(val('c1_const')),
+      '  De quien faltan:',
+      bloque(val('c1_dequien')),
+      '',
+      'ATIPICOS  ' + linea(val('c1_at1')) + '  |  ' + linea(val('c1_at2')),
+      '  Error o hallazgo:',
+      bloque(val('c1_aterr')),
+      '',
+      'INTEGRACION  ' + linea(val('c1_f1')) + ' + ' + linea(val('c1_f2'))
+        + '  llave=' + linea(val('c1_llave')) + '  mismo tipo=' + linea(val('c1_tipos')),
+      bloque(val('c1_merge')),
+      '',
+      'PREGUNTA DE NEGOCIO',
+      bloque(val('c1_preg')),
+      '',
+      'QUE HABRIA QUE LIMPIAR',
+      bloque(val('c1_limpiar')),
+
+      
+      '', '='.repeat(62), 'CANDIDATO 2', '='.repeat(62),
+      'Nombre: '     + linea(val('c2_nombre')),
+      'Entidad: '    + linea(val('c2_entidad')),
+      'URL: '        + linea(val('c2_url')),
+      'Diccionario: '+ linea(val('c2_dicc')),
+      '',
+      'NUMEROS  n=' + linea(val('c2_n')) + '  columnas=' + linea(val('c2_p'))
+        + '  (num ' + linea(val('c2_num')) + ' / cat ' + linea(val('c2_cat'))
+        + ' / ids ' + linea(val('c2_id')) + ')',
+      '',
+      'OBJETIVO: ' + linea(val('c2_obj')) + '  [' + linea(val('c2_objtipo')) + ']'
+        + '  minoritaria=' + linea(val('c2_minor')) + '%',
+      bloque(val('c2_objsal')),
+      '',
+      'PERFILADO  duplicados=' + linea(val('c2_dup'))
+        + '  faltantes=' + linea(val('c2_falt')) + '%'
+        + '  peor columna=' + linea(val('c2_peor'))
+        + '  casi constantes=' + linea(val('c2_const')),
+      '  De quien faltan:',
+      bloque(val('c2_dequien')),
+      '',
+      'ATIPICOS  ' + linea(val('c2_at1')) + '  |  ' + linea(val('c2_at2')),
+      '  Error o hallazgo:',
+      bloque(val('c2_aterr')),
+      '',
+      'INTEGRACION  ' + linea(val('c2_f1')) + ' + ' + linea(val('c2_f2'))
+        + '  llave=' + linea(val('c2_llave')) + '  mismo tipo=' + linea(val('c2_tipos')),
+      bloque(val('c2_merge')),
+      '',
+      'PREGUNTA DE NEGOCIO',
+      bloque(val('c2_preg')),
+      '',
+      'QUE HABRIA QUE LIMPIAR',
+      bloque(val('c2_limpiar')),
+
+      
+      '', '='.repeat(62), 'CANDIDATO 3', '='.repeat(62),
+      'Nombre: '     + linea(val('c3_nombre')),
+      'Entidad: '    + linea(val('c3_entidad')),
+      'URL: '        + linea(val('c3_url')),
+      'Diccionario: '+ linea(val('c3_dicc')),
+      '',
+      'NUMEROS  n=' + linea(val('c3_n')) + '  columnas=' + linea(val('c3_p'))
+        + '  (num ' + linea(val('c3_num')) + ' / cat ' + linea(val('c3_cat'))
+        + ' / ids ' + linea(val('c3_id')) + ')',
+      '',
+      'OBJETIVO: ' + linea(val('c3_obj')) + '  [' + linea(val('c3_objtipo')) + ']'
+        + '  minoritaria=' + linea(val('c3_minor')) + '%',
+      bloque(val('c3_objsal')),
+      '',
+      'PERFILADO  duplicados=' + linea(val('c3_dup'))
+        + '  faltantes=' + linea(val('c3_falt')) + '%'
+        + '  peor columna=' + linea(val('c3_peor'))
+        + '  casi constantes=' + linea(val('c3_const')),
+      '  De quien faltan:',
+      bloque(val('c3_dequien')),
+      '',
+      'ATIPICOS  ' + linea(val('c3_at1')) + '  |  ' + linea(val('c3_at2')),
+      '  Error o hallazgo:',
+      bloque(val('c3_aterr')),
+      '',
+      'INTEGRACION  ' + linea(val('c3_f1')) + ' + ' + linea(val('c3_f2'))
+        + '  llave=' + linea(val('c3_llave')) + '  mismo tipo=' + linea(val('c3_tipos')),
+      bloque(val('c3_merge')),
+      '',
+      'PREGUNTA DE NEGOCIO',
+      bloque(val('c3_preg')),
+      '',
+      'QUE HABRIA QUE LIMPIAR',
+      bloque(val('c3_limpiar')),
+
+      '', '='.repeat(62), 'CIERRE', '='.repeat(62),
+      'EL MEJOR DE LOS TRES, Y POR QUE',
+      bloque(val('z_mejor')),
+      '',
+      'EL QUE MAS RIESGO TIENE',
+      bloque(val('z_riesgo')),
+      '',
+      'TAREA DE CRISP-DM: ' + radio('tarea')
+    ].join('\n');
+
+    salida.value = t;
+    salida.classList.add('visible');
+    salida.scrollIntoView({block:'nearest'});
+    salida.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch(e){}
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(t).then(function(){
+        estado.textContent = 'Copiado. Péguelo en Moodle y adjunte los datos.';
+      }, function(){
+        estado.textContent = ok ? 'Copiado. Péguelo en Moodle y adjunte los datos.'
+                                : 'Seleccione el texto de abajo y cópielo.';
+      });
+    } else {
+      estado.textContent = ok ? 'Copiado. Péguelo en Moodle y adjunte los datos.'
+                              : 'Seleccione el texto de abajo y cópielo.';
+    }
+  });
+
+  document.getElementById('btnLimpiar').addEventListener('click', function(){
+    [].slice.call(document.querySelectorAll('input[type=text],textarea')).forEach(function(e){
+      if (e.id !== 'salida') e.value = '';
+    });
+    [].slice.call(document.querySelectorAll('input[type=radio]')).forEach(function(e){ e.checked = false; });
+    salida.value=''; salida.classList.remove('visible'); estado.textContent='';
+  });
+})();
+</script>
+
+</body>
+</html>

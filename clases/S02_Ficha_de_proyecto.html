@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ficha de proyecto · Fase 1 · Minería de Datos 2026-3</title>
+<style>
+:root{
+  --papel:#FBF9F4; --papel2:#F2EEE5; --tinta:#1C1814; --texto:#2E2820;
+  --tenue:#6E6558; --linea:#DDD5C7; --linea2:#C6BCA9;
+  --pk:#A96D14; --fk:#1E7F63; --alerta:#B0442F;
+  --mono:"Cascadia Mono",Consolas,"SF Mono",Menlo,"DejaVu Sans Mono",monospace;
+  --sans:"Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root{--papel:#14120F;--papel2:#211D18;--tinta:#F7F4EE;--texto:#E9E3D7;
+    --tenue:#9C9182;--linea:#3A3229;--linea2:#4A4036;
+    --pk:#E0A33C;--fk:#5FBFA0;--alerta:#D9705E}
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--papel);color:var(--texto);font-family:var(--sans);
+  font-size:16.5px;line-height:1.62;padding:2.4rem 1.2rem 5rem}
+.doc{max-width:58rem;margin:0 auto}
+header.doc-head{border-bottom:2px solid var(--linea2);padding-bottom:1.1rem;margin-bottom:1.6rem}
+.eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--pk);margin:0 0 .5rem}
+h1{font-size:clamp(1.7rem,4vw,2.3rem);line-height:1.14;margin:0 0 .4rem;color:var(--tinta);letter-spacing:-.018em}
+.meta{font-size:.92rem;color:var(--tenue);margin-top:.5rem}
+h2{font-size:1.26rem;margin:2.2rem 0 .5rem;color:var(--tinta);
+  padding-bottom:.3rem;border-bottom:1px solid var(--linea)}
+h3{font-size:1.04rem;margin:1.4rem 0 .35rem;color:var(--tinta)}
+p{margin:.6rem 0} ul,ol{margin:.6rem 0;padding-left:1.35rem} li{margin:.32rem 0}
+li::marker{color:var(--fk)}
+strong,b{color:var(--tinta);font-weight:650} em{font-style:italic}
+code{font-family:var(--mono);font-size:.9em;background:var(--papel2);
+  border:1px solid var(--linea);padding:.06em .34em;border-radius:4px;color:var(--fk)}
+pre{background:var(--papel2);border:1px solid var(--linea);border-left:3px solid var(--fk);
+  border-radius:0 7px 7px 0;padding:.85rem 1rem;overflow-x:auto;font-family:var(--mono);
+  font-size:.82rem;line-height:1.55}
+pre code{background:none;border:none;padding:0;color:var(--texto)}
+.tabla{overflow-x:auto;margin:.9rem 0}
+table{border-collapse:collapse;width:100%;font-size:.94rem}
+th,td{padding:.5rem .7rem;text-align:left;border-bottom:1px solid var(--linea);vertical-align:top}
+thead th{font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--tenue);font-weight:600;border-bottom:2px solid var(--linea2);white-space:nowrap}
+td.min{font-family:var(--mono);text-align:right;white-space:nowrap;color:var(--tenue)}
+tbody tr:hover{background:var(--papel2)}
+.nota,.aviso,.ok{padding:.85rem 1.1rem;margin:1.1rem 0;border-radius:0 7px 7px 0;font-size:.97rem}
+.nota{border-left:3px solid var(--linea2);background:var(--papel2)}
+.aviso{border-left:3px solid var(--alerta);background:color-mix(in srgb,var(--alerta) 8%,var(--papel))}
+.ok{border-left:3px solid var(--fk);background:color-mix(in srgb,var(--fk) 8%,var(--papel))}
+.aviso b{color:var(--alerta)} .ok b{color:var(--fk)}
+.nota p:first-child,.aviso p:first-child,.ok p:first-child{margin-top:0}
+.nota p:last-child,.aviso p:last-child,.ok p:last-child{margin-bottom:0}
+
+/* ---------- formulario ---------- */
+.preg{border:1px solid var(--linea);border-left:3px solid var(--pk);border-radius:0 7px 7px 0;
+  background:var(--papel2);padding:1rem 1.15rem;margin:1.1rem 0}
+.preg .n{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--pk);display:block;margin-bottom:.25rem}
+.preg .q{display:block;font-weight:650;color:var(--tinta);font-size:1.02rem;line-height:1.4}
+.preg .hint{font-size:.88rem;color:var(--tenue);margin:.35rem 0 .6rem}
+.preg input[type=text],.preg textarea{width:100%;font-family:var(--sans);font-size:.97rem;
+  color:var(--texto);background:var(--papel);border:1px solid var(--linea2);border-radius:5px;
+  padding:.55rem .7rem;line-height:1.5}
+.preg textarea{min-height:4.6rem;resize:vertical}
+.preg input:focus,.preg textarea:focus{outline:2px solid var(--pk);outline-offset:1px;border-color:var(--pk)}
+.fila{display:flex;gap:.7rem;flex-wrap:wrap}
+.fila > *{flex:1;min-width:11rem}
+.mini{font-family:var(--mono);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--tenue);display:block;margin:.55rem 0 .2rem}
+.acciones{display:flex;gap:.7rem;flex-wrap:wrap;align-items:center;margin:1.4rem 0 .6rem}
+button{font-family:var(--sans);font-size:.95rem;font-weight:600;cursor:pointer;
+  border-radius:6px;padding:.6rem 1.1rem;border:1px solid var(--pk);
+  background:var(--pk);color:var(--papel)}
+button.sec{background:transparent;color:var(--pk)}
+button:hover{filter:brightness(1.08)}
+#salida{width:100%;min-height:15rem;font-family:var(--mono);font-size:.82rem;line-height:1.55;
+  background:var(--papel2);color:var(--texto);border:1px solid var(--linea2);border-radius:7px;
+  padding:.9rem 1rem;margin-top:.4rem}
+#aviso-copia{font-size:.9rem;color:var(--fk);min-height:1.3rem}
+footer.doc-foot{margin-top:3rem;padding-top:1rem;border-top:1px solid var(--linea);
+  font-size:.84rem;color:var(--tenue)}
+@media (max-width:640px){body{font-size:15.5px;padding:1.4rem .9rem 3rem}}
+@media print{body{background:#fff;color:#111;font-size:10.5pt;padding:0}
+  h1,h2,h3,b,strong{color:#000} pre,table,.nota,.aviso,.ok,.preg{page-break-inside:avoid}
+  .acciones,#salida,#aviso-copia{display:none}
+  .preg input[type=text],.preg textarea{border:1px solid #999;min-height:2.2rem}}
+</style>
+</head>
+<body>
+<main class="doc">
+
+<header class="doc-head">
+  <p class="eyebrow">Minería de Datos 2026-3 · sesión 2 · actividad en clase</p>
+  <h1>Ficha de proyecto — fase 1</h1>
+  <p class="meta">Jueves 13 de agosto de 2026 · por grupo · 20 minutos en clase ·
+     se entrega hoy antes de las 10:00</p>
+</header>
+
+<div class="ok">
+  <p><b>Qué es esto.</b> La fase 1 de CRISP‑DM —comprensión del negocio— aplicada a su proyecto.
+  Son cuatro casillas y no requieren computador para pensarse: requieren ponerse de acuerdo.
+  Al final, el botón <b>«Preparar el texto del grupo»</b> arma el mensaje listo para pegar en el
+  grupo de WhatsApp y, cuando abra la sección, en Moodle.</p>
+</div>
+
+<h2>Antes de escribir: los dos errores que se cobran en noviembre</h2>
+
+<div class="tabla">
+<table>
+  <thead><tr><th>Error</th><th>Cómo se ve</th><th>Qué hacer</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><b>Objetivo de negocio disfrazado de pregunta</b></td>
+      <td><em>«Analizar los datos de accidentalidad en Bogotá.»</em></td>
+      <td>Preguntarse: ¿cuál es la unidad —una persona, un siniestro, un mes—? ¿en qué momento se
+          decide? ¿cómo se sabría en marzo si acertamos?</td>
+    </tr>
+    <tr>
+      <td><b>Fuga de información</b></td>
+      <td>Una columna que <b>ya contiene la respuesta</b> porque se registró después:
+          <code>matricula_siguiente</code> para predecir el retiro.</td>
+      <td>Por cada columna candidata: <b>¿existía este dato en el momento en que hay que decidir?</b>
+          Si no, se saca.</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h2>La ficha</h2>
+
+<div class="preg">
+  <span class="n">Grupo</span>
+  <span class="q">Identificación</span>
+  <p class="hint">Número de grupo asignado en el tablero, vocero e integrantes (nombre y código,
+     separados por «;»).</p>
+  <div class="fila">
+    <div><span class="mini">Grupo n.º</span><input type="text" id="g_num" placeholder="3"></div>
+    <div><span class="mini">Vocero</span><input type="text" id="g_voc" placeholder="Nombre del vocero"></div>
+  </div>
+  <span class="mini">Integrantes</span>
+  <textarea id="g_int" placeholder="Nombre Apellido 20211020000; Nombre Apellido 20211020000; ..."></textarea>
+</div>
+
+<div class="preg">
+  <span class="n">Casilla 1</span>
+  <span class="q">Pregunta de negocio</span>
+  <p class="hint">Qué decisión concreta quiere tomar alguien, y qué haría distinto si tuviera la
+     respuesta. En el caso de hoy: <em>«¿a cuáles 150 estudiantes acompañamos este semestre?»</em></p>
+  <textarea id="c1" placeholder="¿…?"></textarea>
+</div>
+
+<div class="preg">
+  <span class="n">Casilla 2</span>
+  <span class="q">Pregunta de minería</span>
+  <p class="hint">La traducción de la anterior a algo verificable: <b>unidad de análisis</b> (qué es
+     una fila), <b>momento de corte</b> (con qué información se cuenta al decidir) y <b>qué se estima</b>
+     (una categoría, un número, unos grupos). Ejemplo: <em>«dado el historial al cierre del semestre,
+     ¿cuál es la probabilidad de que el estudiante no se matricule en el siguiente?»</em></p>
+  <textarea id="c2" placeholder="Dado …, ¿…?"></textarea>
+  <div class="fila">
+    <div><span class="mini">Unidad de análisis (una fila es…)</span><input type="text" id="c2u" placeholder="un estudiante"></div>
+    <div><span class="mini">Tarea</span><input type="text" id="c2t" placeholder="clasificación / regresión / agrupamiento"></div>
+  </div>
+</div>
+
+<div class="preg">
+  <span class="n">Casilla 3</span>
+  <span class="q">Criterio de éxito — con número</span>
+  <p class="hint">Qué resultado haría que el proyecto valiera la pena, escrito <b>hoy</b>. Incluya la
+     comparación honesta: ¿qué pasaría sin modelo, al azar o con la regla que ya se usa? Ejemplo:
+     <em>«que entre los 150 señalados haya más retiros reales que al azar; al azar serían unos 37».</em></p>
+  <textarea id="c3" placeholder="Que … , comparado con … que es lo que se obtiene hoy sin modelo."></textarea>
+</div>
+
+<div class="preg">
+  <span class="n">Casilla 4</span>
+  <span class="q">Restricciones</span>
+  <p class="hint">Qué información <b>no</b> se puede usar por no existir al momento de decidir (fuga),
+     qué hay de datos personales, y qué licencia tiene la fuente.</p>
+  <textarea id="c4" placeholder="No se puede usar …; la fuente es … con licencia …; no hay datos personales identificables."></textarea>
+</div>
+
+<h2>Los dos candidatos de conjunto de datos</h2>
+
+<p>De cada uno: nombre, enlace de la fuente y el resultado de <code>df.shape</code>. Si todavía no lo
+han corrido, ábranlo ahora en Colab con la sección 8 del notebook de hoy.</p>
+
+<div class="preg">
+  <span class="n">Candidato A</span>
+  <span class="q">El que más les convence</span>
+  <div class="fila">
+    <div><span class="mini">Nombre</span><input type="text" id="a_nom" placeholder="Accidentalidad Bogotá 2019-2024"></div>
+    <div><span class="mini">Fuente / enlace</span><input type="text" id="a_url" placeholder="datos.gov.co/…"></div>
+  </div>
+  <div class="fila">
+    <div><span class="mini">Filas</span><input type="text" id="a_fil" placeholder="24 500"></div>
+    <div><span class="mini">Columnas</span><input type="text" id="a_col" placeholder="18"></div>
+    <div><span class="mini">Objetivo categórico</span><input type="text" id="a_cat" placeholder="gravedad (3 clases)"></div>
+    <div><span class="mini">Objetivo numérico</span><input type="text" id="a_num" placeholder="costo_estimado"></div>
+  </div>
+  <span class="mini">Suciedad encontrada (faltantes, duplicados, categorías inconsistentes)</span>
+  <textarea id="a_suc" placeholder="12 % de faltantes en …, categorías escritas de tres formas en …"></textarea>
+</div>
+
+<div class="preg">
+  <span class="n">Candidato B</span>
+  <span class="q">El de respaldo</span>
+  <div class="fila">
+    <div><span class="mini">Nombre</span><input type="text" id="b_nom" placeholder=""></div>
+    <div><span class="mini">Fuente / enlace</span><input type="text" id="b_url" placeholder=""></div>
+  </div>
+  <div class="fila">
+    <div><span class="mini">Filas</span><input type="text" id="b_fil" placeholder=""></div>
+    <div><span class="mini">Columnas</span><input type="text" id="b_col" placeholder=""></div>
+    <div><span class="mini">Objetivo categórico</span><input type="text" id="b_cat" placeholder=""></div>
+    <div><span class="mini">Objetivo numérico</span><input type="text" id="b_num" placeholder=""></div>
+  </div>
+  <span class="mini">Suciedad encontrada</span>
+  <textarea id="b_suc" placeholder=""></textarea>
+</div>
+
+<div class="aviso">
+  <p><b>Los mínimos, otra vez.</b> ≥ 2 000 filas · ≥ 12 columnas · ≥ 6 numéricas continuas ·
+  ≥ 3 categóricas de 2 a 20 niveles · ≥ 1 fecha o texto libre · 1 objetivo categórico (2 a 5 clases,
+  la menor ≥ 10 %) · 1 objetivo numérico continuo · ≤ 200 MB · <b>y con suciedad real</b>.
+  Vetados: <code>iris</code>, <code>mtcars</code>, <code>USArrests</code>, <code>winequality</code>,
+  <code>Titanic</code>, <code>Boston</code>, <code>penguins</code>, <code>MNIST</code>,
+  <code>tips</code>. Un conjunto de datos distinto por grupo.</p>
+</div>
+
+<h2>Preparar la entrega</h2>
+
+<div class="acciones">
+  <button type="button" id="btn-armar">Preparar el texto del grupo</button>
+  <button type="button" class="sec" id="btn-copiar">Copiar al portapapeles</button>
+  <span id="aviso-copia"></span>
+</div>
+
+<textarea id="salida" readonly placeholder="El texto armado aparece aquí. Se pega en el grupo de WhatsApp — y en Moodle cuando abra la sección."></textarea>
+
+<div class="nota">
+  <p><b>Qué pasa con esto después.</b> Lo que quede aprobado hoy es la mitad de la propuesta del
+  <b>sábado 22 de agosto</b>. La otra mitad es el notebook con el diagnóstico completo del conjunto
+  elegido: <code>shape</code>, <code>dtypes</code>, faltantes por columna, duplicados y el reparto de
+  la columna objetivo. Un solo conjunto por grupo, y quien vea también Estadística Multidimensional
+  no puede repetir el de esa asignatura.</p>
+</div>
+
+<footer class="doc-foot">
+  Minería de Datos · 26160 · grupo 020-81 · periodo 2026-3 ·
+  Jhon Alejandro Varón Robayo · Universidad Distrital Francisco José de Caldas<br>
+  Sesión 2 — jueves 13 de agosto de 2026.
+</footer>
+
+</main>
+
+<script>
+(function () {
+  var campos = [
+    ['g_num', 'Grupo n.º'],
+    ['g_voc', 'Vocero'],
+    ['g_int', 'Integrantes'],
+    ['c1',    '1. PREGUNTA DE NEGOCIO'],
+    ['c2',    '2. PREGUNTA DE MINERÍA'],
+    ['c2u',   '   Unidad de análisis'],
+    ['c2t',   '   Tarea'],
+    ['c3',    '3. CRITERIO DE ÉXITO'],
+    ['c4',    '4. RESTRICCIONES']
+  ];
+
+  var candidatos = [
+    ['A', ['a_nom', 'a_url', 'a_fil', 'a_col', 'a_cat', 'a_num', 'a_suc']],
+    ['B', ['b_nom', 'b_url', 'b_fil', 'b_col', 'b_cat', 'b_num', 'b_suc']]
+  ];
+  var etiquetas = ['Nombre', 'Fuente', 'Filas', 'Columnas', 'Objetivo categórico',
+                   'Objetivo numérico', 'Suciedad'];
+
+  function v(id) {
+    var el = document.getElementById(id);
+    return el && el.value ? el.value.trim() : '';
+  }
+
+  function armar() {
+    var faltan = [];
+    var t = 'MINERÍA DE DATOS 2026-3 · FICHA DE PROYECTO — FASE 1\n';
+    t += 'Sesión 2 · jueves 13 de agosto de 2026\n';
+    t += '------------------------------------------------------------\n\n';
+
+    campos.forEach(function (c) {
+      var val = v(c[0]);
+      if (!val) { faltan.push(c[1].trim()); val = '(pendiente)'; }
+      t += c[1] + ': ' + val + '\n';
+      if (c[0] === 'g_int' || c[0] === 'c2t') { t += '\n'; }
+    });
+
+    t += '\nCANDIDATOS DE CONJUNTO DE DATOS\n';
+    candidatos.forEach(function (c) {
+      t += '\n  Candidato ' + c[0] + '\n';
+      c[1].forEach(function (id, k) {
+        var val = v(id);
+        if (!val) { val = '(pendiente)'; }
+        t += '    ' + etiquetas[k] + ': ' + val + '\n';
+      });
+    });
+
+    if (faltan.length) {
+      t += '\n------------------------------------------------------------\n';
+      t += 'SIN COMPLETAR: ' + faltan.join(' · ') + '\n';
+    }
+
+    document.getElementById('salida').value = t;
+    document.getElementById('aviso-copia').textContent =
+      faltan.length ? 'Faltan ' + faltan.length + ' casillas.' : 'Ficha completa.';
+  }
+
+  document.getElementById('btn-armar').addEventListener('click', armar);
+
+  document.getElementById('btn-copiar').addEventListener('click', function () {
+    var salida = document.getElementById('salida');
+    if (!salida.value) { armar(); }
+    salida.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    if (navigator.clipboard && !ok) {
+      navigator.clipboard.writeText(salida.value).then(function () {
+        document.getElementById('aviso-copia').textContent = 'Copiado.';
+      });
+      return;
+    }
+    document.getElementById('aviso-copia').textContent = ok ? 'Copiado.' : 'Seleccione el texto y copie con Ctrl+C.';
+  });
+})();
+</script>
+
+</body>
+</html>
