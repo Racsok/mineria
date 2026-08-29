@@ -1,0 +1,27 @@
+# Jupyter Notebooks (Puntos de control y temporales)
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/
+.jupyter/
+
+# Entornos virtuales (Si creas carpetas locales de entorno)
+venv/
+.venv/
+env/
+.env
+
+# Archivos de caché de Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Datos y descargas (Para evitar subir datasets pesados de IMDB)
+*.csv
+*.json
+*.sqlite
+data/
+datasets/
+
+# Configuraciones de editores de código (Opcional)
+.vscode/
+.idea/
+.DS_Store
