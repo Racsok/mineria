@@ -20,7 +20,9 @@ __pycache__/
 *.json
 *.sqlite
 data/
-datasets/
+datasets/all_seasons.csv
+datasets/movie_metadata.csv
+
 
 # Configuraciones de editores de código (Opcional)
 .vscode/
