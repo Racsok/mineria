@@ -16,7 +16,7 @@ __pycache__/
 *$py.class
 
 # Datos y descargas (Para evitar subir datasets pesados de IMDB)
-*.csv
+#*.csv
 *.json
 *.sqlite
 data/
